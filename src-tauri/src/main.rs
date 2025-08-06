@@ -54,6 +54,7 @@ fn get_interfaces() -> Result<Vec<NetworkInterface>, String> {
 
 
 #[cfg(target_os = "windows")]
+#[tauri::command]
 fn check_npcap() -> Result<bool, String> {
     // Vérifier si Npcap est installé sur Windows
     let npcap_path = std::path::PathBuf::from("C:\\Program Files\\Npcap");
@@ -69,6 +70,7 @@ fn check_npcap() -> Result<bool, String> {
 }
 
 #[cfg(not(target_os = "windows"))]
+#[tauri::command]
 fn check_npcap() -> Result<bool, String> {
     // Sur Linux/macOS, vérifier si libpcap est disponible
     match std::process::Command::new("pkg-config").args(&["--exists", "libpcap"]).output() {

@@ -35,10 +35,7 @@
       "icons/icon.ico",
       "icons/icon.icns"
     ],
-    "resources": [
-      "wpcap.dll",
-      "packet.dll"
-    ],
+    "resources": [],
     "externalBin": [],
     "copyright": "Copyright (c) 2024 DHCP Monitor",
     "category": "DeveloperTool",
