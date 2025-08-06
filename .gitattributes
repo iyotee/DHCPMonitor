@@ -1,0 +1,22 @@
+# Exclure les fichiers de source des releases
+src/ export-ignore
+src-tauri/ export-ignore
+node_modules/ export-ignore
+dist/ export-ignore
+*.bat export-ignore
+*.sh export-ignore
+*.vbs export-ignore
+package.json export-ignore
+package-lock.json export-ignore
+tsconfig.json export-ignore
+tsconfig.node.json export-ignore
+vite.config.ts export-ignore
+tailwind.config.js export-ignore
+postcss.config.js export-ignore
+index.html export-ignore
+LICENSE export-ignore
+SCRIPTS.md export-ignore
+.gitignore export-ignore
+
+# Inclure seulement les fichiers de release
+release/ export-subst 
