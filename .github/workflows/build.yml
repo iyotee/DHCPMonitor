@@ -10,6 +10,69 @@ permissions:
   contents: write
 
 jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpcap-dev
+
+      - name: Debug - Check environment
+        run: |
+          echo "=== Node version ==="
+          node --version
+          echo "=== NPM version ==="
+          npm --version
+          echo "=== Rust version ==="
+          rustc --version
+          echo "=== Cargo version ==="
+          cargo --version
+          echo "=== Tauri CLI version ==="
+          npx @tauri-apps/cli --version
+
+      - name: Debug - List files
+        run: |
+          echo "=== Current directory ==="
+          ls -la
+          echo "=== Dist directory ==="
+          ls -la dist
+          echo "=== Tauri directory ==="
+          ls -la src-tauri
+
+      - name: Test Tauri build
+        run: |
+          cd src-tauri
+          cargo check
+          cd ..
+          npx @tauri-apps/cli build --verbose
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dhcp-monitor-test
+          path: |
+            src-tauri/target/release/bundle/
+            src-tauri/target/release/dhcp-monitor
+
   build-windows:
     runs-on: windows-latest
     steps:
@@ -31,17 +94,8 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Debug - List files
-        run: |
-          echo "=== Current directory ==="
-          dir
-          echo "=== Dist directory ==="
-          dir dist
-          echo "=== Tauri directory ==="
-          dir src-tauri
-
       - name: Build Tauri app
-        run: npx @tauri-apps/cli build --verbose
+        run: npx @tauri-apps/cli build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -74,17 +128,8 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Debug - List files
-        run: |
-          echo "=== Current directory ==="
-          ls -la
-          echo "=== Dist directory ==="
-          ls -la dist
-          echo "=== Tauri directory ==="
-          ls -la src-tauri
-
       - name: Build Tauri app
-        run: npx @tauri-apps/cli build --verbose
+        run: npx @tauri-apps/cli build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -119,17 +164,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libpcap-dev
 
-      - name: Debug - List files
-        run: |
-          echo "=== Current directory ==="
-          ls -la
-          echo "=== Dist directory ==="
-          ls -la dist
-          echo "=== Tauri directory ==="
-          ls -la src-tauri
-
       - name: Build Tauri app
-        run: npx @tauri-apps/cli build --verbose
+        run: npx @tauri-apps/cli build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -140,7 +176,7 @@ jobs:
             src-tauri/target/release/dhcp-monitor
 
   release:
-    needs: [build-windows, build-macos, build-linux]
+    needs: [test-build, build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     
