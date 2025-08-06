@@ -6,16 +6,12 @@ on:
       - 'v*'
   workflow_dispatch:
 
-jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [windows-latest, macos-latest, ubuntu-latest]
-        target: [x86_64-pc-windows-msvc, universal-apple-darwin, x86_64-unknown-linux-gnu]
+permissions:
+  contents: write
 
-    runs-on: ${{ matrix.platform }}
-    
+jobs:
+  build-windows:
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,7 +26,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: ${{ matrix.target }}
+          target: x86_64-pc-windows-msvc
           override: true
 
       - name: Install dependencies
@@ -44,19 +40,99 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: --target ${{ matrix.target }}
+          args: --target x86_64-pc-windows-msvc
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dhcp-monitor-${{ matrix.platform }}
+          name: dhcp-monitor-windows
           path: |
             src-tauri/target/release/bundle/
-            src-tauri/target/release/dhcp-monitor*
-            src-tauri/target/release/*.dll
+            src-tauri/target/release/dhcp-monitor.exe
+            src-tauri/target/release/packet.dll
+            src-tauri/target/release/wpcap.dll
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: universal-apple-darwin
+          override: true
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --target universal-apple-darwin
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dhcp-monitor-macos
+          path: |
+            src-tauri/target/release/bundle/
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-gnu
+          override: true
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --target x86_64-unknown-linux-gnu
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dhcp-monitor-linux
+          path: |
+            src-tauri/target/release/bundle/
+            src-tauri/target/release/dhcp-monitor
 
   release:
-    needs: build
+    needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     
@@ -117,9 +193,9 @@ jobs:
             - Consulter le [README principal](https://github.com/iyotee/DHCPMonitor#readme)
             - Ouvrir une [issue](https://github.com/iyotee/DHCPMonitor/issues) en cas de problème
           files: |
-            artifacts/dhcp-monitor-windows-latest/**/*
-            artifacts/dhcp-monitor-macos-latest/**/*
-            artifacts/dhcp-monitor-ubuntu-latest/**/*
+            artifacts/dhcp-monitor-windows/**/*
+            artifacts/dhcp-monitor-macos/**/*
+            artifacts/dhcp-monitor-linux/**/*
           draft: false
           prerelease: false
         env:
