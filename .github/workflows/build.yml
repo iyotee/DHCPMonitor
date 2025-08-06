@@ -39,18 +39,18 @@ jobs:
       - name: Create portable package
         shell: cmd
         run: |
-          # Create portable directory in the root
+          REM Create portable directory in the root
           if exist "portable" rmdir /s /q "portable"
           mkdir "portable"
           
-          # Copy executable
+          REM Copy executable
           copy "src-tauri\target\release\dhcp-monitor.exe" "portable\DHCP Monitor Pro.exe"
           
-          # Copy DLLs
+          REM Copy DLLs
           copy "%SystemRoot%\System32\wpcap.dll" "portable\" >nul
           copy "%SystemRoot%\System32\packet.dll" "portable\" >nul
           
-          # Create README
+          REM Create README
           echo DHCP Monitor Pro - Portable Version > "portable\README.txt"
           echo ================================== >> "portable\README.txt"
           echo. >> "portable\README.txt"
@@ -215,17 +215,17 @@ jobs:
             ### 📦 Fichiers Inclus
             
             #### Windows
-                         - `DHCP Monitor Pro_1.1.18_x64-setup.exe` - Installateur NSIS
-             - `DHCP Monitor Pro_1.1.18_x64_en-US.msi` - Package MSI
+                         - `DHCP Monitor Pro_1.1.19_x64-setup.exe` - Installateur NSIS
+             - `DHCP Monitor Pro_1.1.19_x64_en-US.msi` - Package MSI
             - `dhcp-monitor.exe` + DLLs - Version portable
             
             #### macOS
             - `DHCP Monitor Pro.app` - Application macOS
-                         - `DHCP Monitor Pro_1.1.18_x64.dmg` - Installateur DMG
+                         - `DHCP Monitor Pro_1.1.19_x64.dmg` - Installateur DMG
             
             #### Linux
             - `dhcp-monitor` - Exécutable Linux
-                         - `DHCP Monitor Pro_1.1.18_amd64.AppImage` - AppImage
+                         - `DHCP Monitor Pro_1.1.19_amd64.AppImage` - AppImage
             
             ### 🔧 Installation
             
