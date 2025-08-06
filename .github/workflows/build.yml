@@ -179,36 +179,68 @@ jobs:
 
       - name: Prepare release files
         run: |
-          # Créer un dossier pour les fichiers de release
-          mkdir -p release-files
-          
-          echo "📦 Préparation des fichiers de release..."
-          echo "📁 Contenu des artifacts :"
-          find artifacts -type f -name "*" | head -20
-          
-          # Copier les fichiers Windows
-          if [ -d "artifacts/dhcp-monitor-windows" ]; then
-            echo "🪟 Copie des fichiers Windows..."
-            cp -r artifacts/dhcp-monitor-windows/* release-files/ 2>/dev/null || true
-          fi
-          
-          # Copier les fichiers macOS
-          if [ -d "artifacts/dhcp-monitor-macos" ]; then
-            echo "🍎 Copie des fichiers macOS..."
-            cp -r artifacts/dhcp-monitor-macos/* release-files/ 2>/dev/null || true
-          fi
-          
-          # Copier les fichiers Linux
-          if [ -d "artifacts/dhcp-monitor-linux" ]; then
-            echo "🐧 Copie des fichiers Linux..."
-            cp -r artifacts/dhcp-monitor-linux/* release-files/ 2>/dev/null || true
-          fi
-          
-          # Lister les fichiers préparés
-          echo "📦 Fichiers préparés pour la release :"
-          ls -la release-files/
-          echo "📊 Taille des fichiers :"
-          du -h release-files/* 2>/dev/null || true
+           # Créer un dossier pour les fichiers de release
+           mkdir -p release-files
+           
+           echo "📦 Préparation des fichiers de release..."
+           echo "📁 Contenu des artifacts :"
+           find artifacts -type f -name "*" | head -20
+           
+           # Copier les fichiers Windows
+           if [ -d "artifacts/dhcp-monitor-windows" ]; then
+             echo "🪟 Copie des fichiers Windows..."
+             # Copier les fichiers du dossier bundle (installateurs)
+             if [ -d "artifacts/dhcp-monitor-windows/bundle" ]; then
+               echo "📦 Copie des installateurs Windows..."
+               cp -r artifacts/dhcp-monitor-windows/bundle/* release-files/ 2>/dev/null || true
+             fi
+             # Copier les fichiers du dossier portable
+             if [ -d "artifacts/dhcp-monitor-windows/portable" ]; then
+               echo "📦 Copie du package portable..."
+               cp -r artifacts/dhcp-monitor-windows/portable/* release-files/ 2>/dev/null || true
+             fi
+             # Copier les fichiers du dossier release (exécutables)
+             if [ -d "artifacts/dhcp-monitor-windows/release" ]; then
+               echo "📦 Copie des exécutables Windows..."
+               cp -r artifacts/dhcp-monitor-windows/release/* release-files/ 2>/dev/null || true
+             fi
+           fi
+           
+           # Copier les fichiers macOS
+           if [ -d "artifacts/dhcp-monitor-macos" ]; then
+             echo "🍎 Copie des fichiers macOS..."
+             # Copier les fichiers du dossier bundle (installateurs)
+             if [ -d "artifacts/dhcp-monitor-macos/bundle" ]; then
+               echo "📦 Copie des installateurs macOS..."
+               cp -r artifacts/dhcp-monitor-macos/bundle/* release-files/ 2>/dev/null || true
+             fi
+             # Copier les fichiers du dossier release (exécutables)
+             if [ -d "artifacts/dhcp-monitor-macos/release" ]; then
+               echo "📦 Copie des exécutables macOS..."
+               cp -r artifacts/dhcp-monitor-macos/release/* release-files/ 2>/dev/null || true
+             fi
+           fi
+           
+           # Copier les fichiers Linux
+           if [ -d "artifacts/dhcp-monitor-linux" ]; then
+             echo "🐧 Copie des fichiers Linux..."
+             # Copier les fichiers du dossier bundle (installateurs)
+             if [ -d "artifacts/dhcp-monitor-linux/bundle" ]; then
+               echo "📦 Copie des installateurs Linux..."
+               cp -r artifacts/dhcp-monitor-linux/bundle/* release-files/ 2>/dev/null || true
+             fi
+             # Copier les fichiers du dossier release (exécutables)
+             if [ -d "artifacts/dhcp-monitor-linux/release" ]; then
+               echo "📦 Copie des exécutables Linux..."
+               cp -r artifacts/dhcp-monitor-linux/release/* release-files/ 2>/dev/null || true
+             fi
+           fi
+           
+           # Lister les fichiers préparés
+           echo "📦 Fichiers préparés pour la release :"
+           ls -la release-files/
+           echo "📊 Taille des fichiers :"
+           du -h release-files/* 2>/dev/null || true
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -225,17 +257,17 @@ jobs:
             ### 📦 Fichiers Inclus
             
             #### Windows
-                         - `DHCP Monitor Pro_1.1.22_x64-setup.exe` - Installateur NSIS
-             - `DHCP Monitor Pro_1.1.22_x64_en-US.msi` - Package MSI
+                         - `DHCP Monitor Pro_1.1.23_x64-setup.exe` - Installateur NSIS
+             - `DHCP Monitor Pro_1.1.23_x64_en-US.msi` - Package MSI
             - `dhcp-monitor.exe` + DLLs - Version portable
             
             #### macOS
             - `DHCP Monitor Pro.app` - Application macOS
-                         - `DHCP Monitor Pro_1.1.22_x64.dmg` - Installateur DMG
+                         - `DHCP Monitor Pro_1.1.23_x64.dmg` - Installateur DMG
             
             #### Linux
             - `dhcp-monitor` - Exécutable Linux
-                         - `DHCP Monitor Pro_1.1.22_amd64.AppImage` - AppImage
+                         - `DHCP Monitor Pro_1.1.23_amd64.AppImage` - AppImage
             
             ### 🔧 Installation
             
