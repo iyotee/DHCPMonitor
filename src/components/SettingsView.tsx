@@ -36,7 +36,7 @@ const SettingsView: React.FC = () => {
         setUpdateInfo(result);
       } else {
         // Simulation pour la version web - utilise la version actuelle de l'app
-        const currentVersion = "1.1.14"; // Version actuelle de l'app (devrait venir de l'environnement)
+        const currentVersion = "1.1.16"; // Version actuelle de l'app (devrait venir de l'environnement)
         const mockUpdateInfo: UpdateInfo = {
           current_version: currentVersion,
           latest_version: "1.1.15", // Simule une version plus récente
@@ -230,7 +230,7 @@ const SettingsView: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Version:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">1.1.14</span>
+                                     <span className="text-sm font-medium text-gray-900 dark:text-white">1.1.16</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Licence:</span>
@@ -326,9 +326,9 @@ const SettingsView: React.FC = () => {
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Version actuelle:</span>
-                                         <span className="text-sm font-medium text-gray-900 dark:text-white">
-                       {updateInfo?.current_version || "1.1.14"}
-                     </span>
+                                                               <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {updateInfo?.current_version || "1.1.16"}
+                      </span>
                   </div>
                   {updateInfo?.latest_version && updateInfo.latest_version !== updateInfo.current_version && (
                     <div className="flex items-center space-x-2">

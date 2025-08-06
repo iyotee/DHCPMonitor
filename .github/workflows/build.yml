@@ -38,8 +38,7 @@ jobs:
           
       - name: Create portable package
         run: |
-          cd ..
-          # Create portable directory
+          # Create portable directory in the root
           if exist "portable" rmdir /s /q "portable"
           mkdir "portable"
           
@@ -215,17 +214,17 @@ jobs:
             ### 📦 Fichiers Inclus
             
             #### Windows
-            - `DHCP Monitor Pro_1.1.14_x64-setup.exe` - Installateur NSIS
-            - `DHCP Monitor Pro_1.1.14_x64_en-US.msi` - Package MSI
+                         - `DHCP Monitor Pro_1.1.16_x64-setup.exe` - Installateur NSIS
+             - `DHCP Monitor Pro_1.1.16_x64_en-US.msi` - Package MSI
             - `dhcp-monitor.exe` + DLLs - Version portable
             
             #### macOS
             - `DHCP Monitor Pro.app` - Application macOS
-            - `DHCP Monitor Pro_1.1.14_x64.dmg` - Installateur DMG
+                         - `DHCP Monitor Pro_1.1.16_x64.dmg` - Installateur DMG
             
             #### Linux
             - `dhcp-monitor` - Exécutable Linux
-            - `DHCP Monitor Pro_1.1.14_amd64.AppImage` - AppImage
+                         - `DHCP Monitor Pro_1.1.16_amd64.AppImage` - AppImage
             
             ### 🔧 Installation
             
