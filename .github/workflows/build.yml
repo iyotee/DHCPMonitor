@@ -1,0 +1,126 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows-latest, macos-latest, ubuntu-latest]
+        target: [x86_64-pc-windows-msvc, universal-apple-darwin, x86_64-unknown-linux-gnu]
+
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --target ${{ matrix.target }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dhcp-monitor-${{ matrix.platform }}
+          path: |
+            src-tauri/target/release/bundle/
+            src-tauri/target/release/dhcp-monitor*
+            src-tauri/target/release/*.dll
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: DHCP Monitor ${{ github.ref_name }}
+          body: |
+            # DHCP Monitor ${{ github.ref_name }}
+            
+            ## 🚀 Première Release Officielle
+            
+            Application moderne de surveillance DHCP avec détection spécifique de l'Option 50.
+            
+            ### 📦 Fichiers Inclus
+            
+            #### Windows
+            - `DHCP Monitor Pro_0.0.0_x64-setup.exe` - Installateur NSIS
+            - `DHCP Monitor Pro_0.0.0_x64_en-US.msi` - Package MSI
+            - `dhcp-monitor.exe` + DLLs - Version portable
+            
+            #### macOS
+            - `DHCP Monitor Pro.app` - Application macOS
+            - `DHCP Monitor Pro_0.0.0_x64.dmg` - Installateur DMG
+            
+            #### Linux
+            - `dhcp-monitor` - Exécutable Linux
+            - `DHCP Monitor Pro_0.0.0_amd64.AppImage` - AppImage
+            
+            ### 🔧 Installation
+            
+            1. **Windows** : Utiliser l'installateur ou la version portable
+            2. **macOS** : Ouvrir le DMG et glisser l'app dans Applications
+            3. **Linux** : Exécuter l'AppImage ou l'exécutable
+            
+            ### ⚠️ Prerequisites
+            - Privilèges administrateur/root requis pour la capture réseau
+            - Npcap/libpcap inclus dans les installateurs
+            
+            ### 🎯 Fonctionnalités
+            - Capture de paquets DHCP en temps réel
+            - Détection intelligente de l'Option 50
+            - Interface moderne avec thèmes
+            - Statistiques et graphiques
+            - Support multiplateforme
+            
+            ### 🐛 Support
+            - Consulter le [README principal](https://github.com/iyotee/DHCPMonitor#readme)
+            - Ouvrir une [issue](https://github.com/iyotee/DHCPMonitor/issues) en cas de problème
+          files: |
+            artifacts/dhcp-monitor-windows-latest/**/*
+            artifacts/dhcp-monitor-macos-latest/**/*
+            artifacts/dhcp-monitor-ubuntu-latest/**/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
