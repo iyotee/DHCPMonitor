@@ -47,8 +47,18 @@ jobs:
           copy "src-tauri\target\release\dhcp-monitor.exe" "portable\DHCP Monitor Pro.exe"
           
           REM Copy DLLs from System32 (optional - may not exist in GitHub Actions environment)
-          copy "%SystemRoot%\System32\wpcap.dll" "portable\" >nul 2>&1 || echo wpcap.dll not found in System32
-          copy "%SystemRoot%\System32\packet.dll" "portable\" >nul 2>&1 || echo packet.dll not found in System32
+          if exist "%SystemRoot%\System32\wpcap.dll" (
+            copy "%SystemRoot%\System32\wpcap.dll" "portable\" >nul
+            echo wpcap.dll copied from System32
+          ) else (
+            echo wpcap.dll not found in System32
+          )
+          if exist "%SystemRoot%\System32\packet.dll" (
+            copy "%SystemRoot%\System32\packet.dll" "portable\" >nul
+            echo packet.dll copied from System32
+          ) else (
+            echo packet.dll not found in System32
+          )
           
           REM Create README
           echo DHCP Monitor Pro - Portable Version > "portable\README.txt"
@@ -215,17 +225,17 @@ jobs:
             ### 📦 Fichiers Inclus
             
             #### Windows
-                         - `DHCP Monitor Pro_1.1.21_x64-setup.exe` - Installateur NSIS
-             - `DHCP Monitor Pro_1.1.21_x64_en-US.msi` - Package MSI
+                         - `DHCP Monitor Pro_1.1.22_x64-setup.exe` - Installateur NSIS
+             - `DHCP Monitor Pro_1.1.22_x64_en-US.msi` - Package MSI
             - `dhcp-monitor.exe` + DLLs - Version portable
             
             #### macOS
             - `DHCP Monitor Pro.app` - Application macOS
-                         - `DHCP Monitor Pro_1.1.21_x64.dmg` - Installateur DMG
+                         - `DHCP Monitor Pro_1.1.22_x64.dmg` - Installateur DMG
             
             #### Linux
             - `dhcp-monitor` - Exécutable Linux
-                         - `DHCP Monitor Pro_1.1.21_amd64.AppImage` - AppImage
+                         - `DHCP Monitor Pro_1.1.22_amd64.AppImage` - AppImage
             
             ### 🔧 Installation
             
