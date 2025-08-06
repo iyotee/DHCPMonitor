@@ -45,6 +45,8 @@ jobs:
             src-tauri/target/release/dhcp-monitor.exe
             src-tauri/target/release/packet.dll
             src-tauri/target/release/wpcap.dll
+            src-tauri/target/release/*.exe
+            src-tauri/target/release/*.dll
 
   build-macos:
     runs-on: macos-latest
@@ -78,6 +80,9 @@ jobs:
           name: dhcp-monitor-macos
           path: |
             src-tauri/target/release/bundle/
+            src-tauri/target/release/dhcp-monitor
+            src-tauri/target/release/*.app
+            src-tauri/target/release/*.dmg
 
   build-linux:
     runs-on: ubuntu-latest
@@ -117,6 +122,9 @@ jobs:
           path: |
             src-tauri/target/release/bundle/
             src-tauri/target/release/dhcp-monitor
+            src-tauri/target/release/*.AppImage
+            src-tauri/target/release/*.deb
+            src-tauri/target/release/*.rpm
 
   release:
     needs: [build-windows, build-macos, build-linux]
@@ -137,25 +145,33 @@ jobs:
           # Créer un dossier pour les fichiers de release
           mkdir -p release-files
           
+          echo "📦 Préparation des fichiers de release..."
+          echo "📁 Contenu des artifacts :"
+          find artifacts -type f -name "*" | head -20
+          
           # Copier les fichiers Windows
           if [ -d "artifacts/dhcp-monitor-windows" ]; then
-            cp -r artifacts/dhcp-monitor-windows/* release-files/
+            echo "🪟 Copie des fichiers Windows..."
+            cp -r artifacts/dhcp-monitor-windows/* release-files/ 2>/dev/null || true
           fi
           
           # Copier les fichiers macOS
           if [ -d "artifacts/dhcp-monitor-macos" ]; then
-            cp -r artifacts/dhcp-monitor-macos/* release-files/
+            echo "🍎 Copie des fichiers macOS..."
+            cp -r artifacts/dhcp-monitor-macos/* release-files/ 2>/dev/null || true
           fi
           
-          # Copier les fichiers Linux (seulement les fichiers nécessaires)
+          # Copier les fichiers Linux
           if [ -d "artifacts/dhcp-monitor-linux" ]; then
-            # Copier seulement les fichiers de bundle et l'exécutable
-            find artifacts/dhcp-monitor-linux -name "*.AppImage" -o -name "dhcp-monitor" -o -name "*.deb" -o -name "*.rpm" | xargs -I {} cp {} release-files/ 2>/dev/null || true
+            echo "🐧 Copie des fichiers Linux..."
+            cp -r artifacts/dhcp-monitor-linux/* release-files/ 2>/dev/null || true
           fi
           
           # Lister les fichiers préparés
           echo "📦 Fichiers préparés pour la release :"
           ls -la release-files/
+          echo "📊 Taille des fichiers :"
+          du -h release-files/* 2>/dev/null || true
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
