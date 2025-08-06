@@ -32,7 +32,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build Tauri app
-        run: npx @tauri-apps/cli build
+        run: |
+          cd src-tauri
+          npx @tauri-apps/cli build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -66,7 +68,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build Tauri app
-        run: npx @tauri-apps/cli build
+        run: |
+          cd src-tauri
+          npx @tauri-apps/cli build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -102,7 +106,9 @@ jobs:
           sudo apt-get install -y libpcap-dev libssl-dev pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev libglib2.0-dev
 
       - name: Build Tauri app
-        run: npx @tauri-apps/cli build
+        run: |
+          cd src-tauri
+          npx @tauri-apps/cli build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -159,24 +165,24 @@ jobs:
           body: |
             # DHCP Monitor ${{ github.ref_name }}
             
-            ## 🚀 Première Release Officielle
+            ## 🚀 Release ${{ github.ref_name }}
             
             Application moderne de surveillance DHCP avec détection spécifique de l'Option 50.
             
             ### 📦 Fichiers Inclus
             
             #### Windows
-            - `DHCP Monitor Pro_0.0.0_x64-setup.exe` - Installateur NSIS
-            - `DHCP Monitor Pro_0.0.0_x64_en-US.msi` - Package MSI
+            - `DHCP Monitor Pro_1.1.7_x64-setup.exe` - Installateur NSIS
+            - `DHCP Monitor Pro_1.1.7_x64_en-US.msi` - Package MSI
             - `dhcp-monitor.exe` + DLLs - Version portable
             
             #### macOS
             - `DHCP Monitor Pro.app` - Application macOS
-            - `DHCP Monitor Pro_0.0.0_x64.dmg` - Installateur DMG
+            - `DHCP Monitor Pro_1.1.7_x64.dmg` - Installateur DMG
             
             #### Linux
             - `dhcp-monitor` - Exécutable Linux
-            - `DHCP Monitor Pro_0.0.0_amd64.AppImage` - AppImage
+            - `DHCP Monitor Pro_1.1.7_amd64.AppImage` - AppImage
             
             ### 🔧 Installation
             
@@ -194,6 +200,7 @@ jobs:
             - Interface moderne avec thèmes
             - Statistiques et graphiques
             - Support multiplateforme
+            - Vérification automatique des mises à jour
             
             ### 🐛 Support
             - Consulter le [README principal](https://github.com/iyotee/DHCPMonitor#readme)
