@@ -35,18 +35,19 @@ const SettingsView: React.FC = () => {
         const result = await core.invoke<UpdateInfo>('check_for_updates');
         setUpdateInfo(result);
       } else {
-        // Simulation pour la version web
+        // Simulation pour la version web - utilise la version actuelle de l'app
+        const currentVersion = "1.1.14"; // Version actuelle de l'app (devrait venir de l'environnement)
         const mockUpdateInfo: UpdateInfo = {
-          current_version: "1.1.13",
-          latest_version: "1.1.9",
+          current_version: currentVersion,
+          latest_version: "1.1.15", // Simule une version plus récente
           has_update: true,
           release_info: {
-            name: "Version 1.1.2 - Améliorations",
+            name: "Version 1.1.15 - Améliorations",
             body: "Corrections de bugs et améliorations de performance",
-            html_url: "https://github.com/iyotee/DHCPMonitor/releases/tag/v1.1.2",
+            html_url: "https://github.com/iyotee/DHCPMonitor/releases/tag/v1.1.15",
             published_at: new Date().toISOString(),
           },
-          download_url: "https://github.com/iyotee/DHCPMonitor/releases/download/v1.1.2/DHCPMonitor-Setup.exe",
+          download_url: "https://github.com/iyotee/DHCPMonitor/releases/download/v1.1.15/DHCPMonitor-Setup.exe",
         };
         setUpdateInfo(mockUpdateInfo);
       }
@@ -229,7 +230,7 @@ const SettingsView: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Version:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">1.1.13</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">1.1.14</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Licence:</span>
@@ -326,7 +327,7 @@ const SettingsView: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Version actuelle:</span>
                                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                       {updateInfo?.current_version || "1.1.13"}
+                       {updateInfo?.current_version || "1.1.14"}
                      </span>
                   </div>
                   {updateInfo?.latest_version && updateInfo.latest_version !== updateInfo.current_version && (

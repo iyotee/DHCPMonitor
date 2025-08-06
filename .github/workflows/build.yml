@@ -35,6 +35,41 @@ jobs:
         run: |
           cd src-tauri
           npx @tauri-apps/cli build
+          
+      - name: Create portable package
+        run: |
+          cd ..
+          # Create portable directory
+          if exist "portable" rmdir /s /q "portable"
+          mkdir "portable"
+          
+          # Copy executable
+          copy "src-tauri\target\release\dhcp-monitor.exe" "portable\DHCP Monitor Pro.exe"
+          
+          # Copy DLLs
+          copy "%SystemRoot%\System32\wpcap.dll" "portable\" >nul
+          copy "%SystemRoot%\System32\packet.dll" "portable\" >nul
+          
+          # Create README
+          echo DHCP Monitor Pro - Portable Version > "portable\README.txt"
+          echo ================================== >> "portable\README.txt"
+          echo. >> "portable\README.txt"
+          echo This is a portable version of DHCP Monitor Pro. >> "portable\README.txt"
+          echo. >> "portable\README.txt"
+          echo Requirements: >> "portable\README.txt"
+          echo - Windows 10 or later >> "portable\README.txt"
+          echo - Npcap installed (https://npcap.com/) >> "portable\README.txt"
+          echo - Administrator privileges to capture packets >> "portable\README.txt"
+          echo. >> "portable\README.txt"
+          echo Usage: >> "portable\README.txt"
+          echo 1. Right-click "DHCP Monitor Pro.exe" >> "portable\README.txt"
+          echo 2. Select "Run as administrator" >> "portable\README.txt"
+          echo 3. Select your network interface >> "portable\README.txt"
+          echo 4. Start capturing DHCP packets >> "portable\README.txt"
+          echo. >> "portable\README.txt"
+          echo Note: This portable version includes the required Npcap DLLs. >> "portable\README.txt"
+          
+          echo ✅ Portable package created in "portable" directory
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -43,6 +78,7 @@ jobs:
           path: |
             src-tauri/target/release/bundle/
             src-tauri/target/release/
+            portable/
 
   build-macos:
     runs-on: macos-latest
@@ -179,17 +215,17 @@ jobs:
             ### 📦 Fichiers Inclus
             
             #### Windows
-            - `DHCP Monitor Pro_1.1.13_x64-setup.exe` - Installateur NSIS
-            - `DHCP Monitor Pro_1.1.13_x64_en-US.msi` - Package MSI
+            - `DHCP Monitor Pro_1.1.14_x64-setup.exe` - Installateur NSIS
+            - `DHCP Monitor Pro_1.1.14_x64_en-US.msi` - Package MSI
             - `dhcp-monitor.exe` + DLLs - Version portable
             
             #### macOS
             - `DHCP Monitor Pro.app` - Application macOS
-            - `DHCP Monitor Pro_1.1.13_x64.dmg` - Installateur DMG
+            - `DHCP Monitor Pro_1.1.14_x64.dmg` - Installateur DMG
             
             #### Linux
             - `dhcp-monitor` - Exécutable Linux
-            - `DHCP Monitor Pro_1.1.13_amd64.AppImage` - AppImage
+            - `DHCP Monitor Pro_1.1.14_amd64.AppImage` - AppImage
             
             ### 🔧 Installation
             

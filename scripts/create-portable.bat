@@ -4,6 +4,9 @@ REM Create portable package for DHCP Monitor Pro
 echo Creating portable package...
 echo.
 
+REM Change to project root
+cd /d "%~dp0\.."
+
 REM Check if executable exists
 if not exist "src-tauri\target\release\dhcp-monitor.exe" (
     echo ERROR: Executable does not exist.
@@ -11,7 +14,7 @@ if not exist "src-tauri\target\release\dhcp-monitor.exe" (
     echo.
     
     REM Build the application
-    call "%~dp0\..\build.bat"
+    call "build.bat"
     
     REM Check again after build
     if not exist "src-tauri\target\release\dhcp-monitor.exe" (
