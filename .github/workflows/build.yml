@@ -42,11 +42,7 @@ jobs:
           name: dhcp-monitor-windows
           path: |
             src-tauri/target/release/bundle/
-            src-tauri/target/release/dhcp-monitor.exe
-            src-tauri/target/release/packet.dll
-            src-tauri/target/release/wpcap.dll
-            src-tauri/target/release/*.exe
-            src-tauri/target/release/*.dll
+            src-tauri/target/release/
 
   build-macos:
     runs-on: macos-latest
@@ -80,9 +76,7 @@ jobs:
           name: dhcp-monitor-macos
           path: |
             src-tauri/target/release/bundle/
-            src-tauri/target/release/dhcp-monitor
-            src-tauri/target/release/*.app
-            src-tauri/target/release/*.dmg
+            src-tauri/target/release/
 
   build-linux:
     runs-on: ubuntu-latest
@@ -121,10 +115,7 @@ jobs:
           name: dhcp-monitor-linux
           path: |
             src-tauri/target/release/bundle/
-            src-tauri/target/release/dhcp-monitor
-            src-tauri/target/release/*.AppImage
-            src-tauri/target/release/*.deb
-            src-tauri/target/release/*.rpm
+            src-tauri/target/release/
 
   release:
     needs: [build-windows, build-macos, build-linux]
@@ -188,17 +179,17 @@ jobs:
             ### 📦 Fichiers Inclus
             
             #### Windows
-            - `DHCP Monitor Pro_1.1.12_x64-setup.exe` - Installateur NSIS
-            - `DHCP Monitor Pro_1.1.12_x64_en-US.msi` - Package MSI
+            - `DHCP Monitor Pro_1.1.13_x64-setup.exe` - Installateur NSIS
+            - `DHCP Monitor Pro_1.1.13_x64_en-US.msi` - Package MSI
             - `dhcp-monitor.exe` + DLLs - Version portable
             
             #### macOS
             - `DHCP Monitor Pro.app` - Application macOS
-            - `DHCP Monitor Pro_1.1.12_x64.dmg` - Installateur DMG
+            - `DHCP Monitor Pro_1.1.13_x64.dmg` - Installateur DMG
             
             #### Linux
             - `dhcp-monitor` - Exécutable Linux
-            - `DHCP Monitor Pro_1.1.12_amd64.AppImage` - AppImage
+            - `DHCP Monitor Pro_1.1.13_amd64.AppImage` - AppImage
             
             ### 🔧 Installation
             
