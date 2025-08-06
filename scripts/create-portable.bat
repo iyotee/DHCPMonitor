@@ -7,9 +7,18 @@ echo.
 REM Check if executable exists
 if not exist "src-tauri\target\release\dhcp-monitor.exe" (
     echo ERROR: Executable does not exist.
-    echo Please compile the application first with build.bat
-    pause
-    exit /b 1
+    echo Building the application first...
+    echo.
+    
+    REM Build the application
+    call "%~dp0\..\build.bat"
+    
+    REM Check again after build
+    if not exist "src-tauri\target\release\dhcp-monitor.exe" (
+        echo ERROR: Build failed. Executable still does not exist.
+        pause
+        exit /b 1
+    )
 )
 
 REM Create portable directory
