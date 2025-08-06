@@ -31,8 +31,17 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Debug - List files
+        run: |
+          echo "=== Current directory ==="
+          dir
+          echo "=== Dist directory ==="
+          dir dist
+          echo "=== Tauri directory ==="
+          dir src-tauri
+
       - name: Build Tauri app
-        run: npx @tauri-apps/cli build
+        run: npx @tauri-apps/cli build --verbose
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -65,8 +74,17 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Debug - List files
+        run: |
+          echo "=== Current directory ==="
+          ls -la
+          echo "=== Dist directory ==="
+          ls -la dist
+          echo "=== Tauri directory ==="
+          ls -la src-tauri
+
       - name: Build Tauri app
-        run: npx @tauri-apps/cli build
+        run: npx @tauri-apps/cli build --verbose
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -101,8 +119,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libpcap-dev
 
+      - name: Debug - List files
+        run: |
+          echo "=== Current directory ==="
+          ls -la
+          echo "=== Dist directory ==="
+          ls -la dist
+          echo "=== Tauri directory ==="
+          ls -la src-tauri
+
       - name: Build Tauri app
-        run: npx @tauri-apps/cli build
+        run: npx @tauri-apps/cli build --verbose
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
