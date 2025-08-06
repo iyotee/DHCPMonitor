@@ -53,101 +53,102 @@ fn get_interfaces() -> Result<Vec<NetworkInterface>, String> {
 
 
 
-#[tauri::command]
+#[cfg(target_os = "windows")]
 fn check_npcap() -> Result<bool, String> {
     // Vérifier si Npcap est installé sur Windows
-    #[cfg(target_os = "windows")]
-    {
-        let npcap_path = std::path::Path::new("C:\\Program Files\\Npcap");
-        let npcap_path_x86 = std::path::Path::new("C:\\Program Files (x86)\\Npcap");
-        
-        if npcap_path.exists() || npcap_path_x86.exists() {
-            Ok(true)
-        } else {
-            Ok(false)
-        }
-    }
+    let npcap_path = std::path::PathBuf::from("C:\\Program Files\\Npcap");
+    let npcap_path_x86 = std::path::PathBuf::from("C:\\Program Files (x86)\\Npcap");
     
-    #[cfg(not(target_os = "windows"))]
-    {
-        // Sur Linux, on suppose que libpcap est installé
+    if npcap_path.exists() || npcap_path_x86.exists() {
+        println!("✅ Npcap trouvé sur Windows");
         Ok(true)
+    } else {
+        println!("❌ Npcap non trouvé sur Windows");
+        Ok(false)
     }
 }
 
+#[cfg(not(target_os = "windows"))]
+fn check_npcap() -> Result<bool, String> {
+    // Sur Linux/macOS, vérifier si libpcap est disponible
+    match std::process::Command::new("pkg-config").args(&["--exists", "libpcap"]).output() {
+        Ok(output) => {
+            if output.status.success() {
+                println!("✅ libpcap trouvé sur Linux/macOS");
+                Ok(true)
+            } else {
+                println!("❌ libpcap non trouvé sur Linux/macOS");
+                Ok(false)
+            }
+        }
+        Err(_) => {
+            println!("⚠️  pkg-config non disponible, vérification libpcap impossible");
+            Ok(true) // On suppose que c'est OK
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
 fn setup_dll_path() {
-    #[cfg(target_os = "windows")]
-    {
-        use std::env;
-        use std::path::PathBuf;
-        use std::process::Command;
-        use std::fs;
-        use libloading::Library;
-        
-        println!("🔧 Setting up DLL path for Windows...");
-        
-        // Get the executable directory
-        if let Ok(exe_path) = env::current_exe() {
-            if let Some(exe_dir) = exe_path.parent() {
-                println!("🔍 Executable directory: {}", exe_dir.display());
-                
-                // Add System32 to PATH first (like start.bat does)
-                if let Ok(current_path) = env::var("PATH") {
-                    let new_path = format!("{};{}", "%SystemRoot%\\System32", current_path);
-                    env::set_var("PATH", new_path);
-                    println!("✅ Added System32 to PATH");
+    if let Some(exe_path) = std::env::current_exe().ok() {
+        if let Some(exe_dir) = exe_path.parent() {
+            println!("📁 Executable directory: {}", exe_dir.display());
+            
+            // Add the executable directory to PATH
+            if let Ok(current_path) = std::env::var("PATH") {
+                let new_path = format!("{};{}", exe_dir.display(), current_path);
+                std::env::set_var("PATH", new_path);
+                println!("✅ Added executable directory to PATH");
+            }
+            
+            // Try to load DLLs directly from System32 first
+            let system32_wpcap = std::path::PathBuf::from("%SystemRoot%\\System32\\wpcap.dll");
+            let system32_packet = std::path::PathBuf::from("%SystemRoot%\\System32\\packet.dll");
+            
+            println!("🔄 Trying to load DLLs from System32...");
+            unsafe {
+                match libloading::Library::new("wpcap.dll") {
+                    Ok(_) => println!("✅ wpcap.dll loaded from System32"),
+                    Err(e) => println!("❌ Failed to load wpcap.dll from System32: {}", e),
                 }
                 
-                // Add the executable directory to PATH
-                if let Ok(current_path) = env::var("PATH") {
-                    let new_path = format!("{};{}", exe_dir.display(), current_path);
-                    env::set_var("PATH", new_path);
-                    println!("✅ Added executable directory to PATH");
+                match libloading::Library::new("packet.dll") {
+                    Ok(_) => println!("✅ packet.dll loaded from System32"),
+                    Err(e) => println!("❌ Failed to load packet.dll from System32: {}", e),
+                }
+            }
+            
+            // Also try to copy to executable directory as backup
+            let wpcap_path = exe_dir.join("wpcap.dll");
+            let packet_path = exe_dir.join("packet.dll");
+            
+            if !wpcap_path.exists() || !packet_path.exists() {
+                println!("🔄 Copying DLLs from System32 to executable directory...");
+                
+                if let Ok(_) = std::process::Command::new("cmd")
+                    .args(&["/c", "copy", "%SystemRoot%\\System32\\wpcap.dll", &exe_dir.to_string_lossy()])
+                    .output() {
+                    println!("✅ Copied wpcap.dll from System32");
+                } else {
+                    println!("❌ Failed to copy wpcap.dll");
                 }
                 
-                // Try to load DLLs directly from System32 first
-                let system32_wpcap = PathBuf::from("%SystemRoot%\\System32\\wpcap.dll");
-                let system32_packet = PathBuf::from("%SystemRoot%\\System32\\packet.dll");
-                
-                println!("🔄 Trying to load DLLs from System32...");
-                unsafe {
-                    match Library::new("wpcap.dll") {
-                        Ok(_) => println!("✅ wpcap.dll loaded from System32"),
-                        Err(e) => println!("❌ Failed to load wpcap.dll from System32: {}", e),
-                    }
-                    
-                    match Library::new("packet.dll") {
-                        Ok(_) => println!("✅ packet.dll loaded from System32"),
-                        Err(e) => println!("❌ Failed to load packet.dll from System32: {}", e),
-                    }
-                }
-                
-                // Also try to copy to executable directory as backup
-                let wpcap_path = exe_dir.join("wpcap.dll");
-                let packet_path = exe_dir.join("packet.dll");
-                
-                if !wpcap_path.exists() || !packet_path.exists() {
-                    println!("🔄 Copying DLLs from System32 to executable directory...");
-                    
-                    if let Ok(_) = Command::new("cmd")
-                        .args(&["/c", "copy", "%SystemRoot%\\System32\\wpcap.dll", &exe_dir.to_string_lossy()])
-                        .output() {
-                        println!("✅ Copied wpcap.dll from System32");
-                    } else {
-                        println!("❌ Failed to copy wpcap.dll");
-                    }
-                    
-                    if let Ok(_) = Command::new("cmd")
-                        .args(&["/c", "copy", "%SystemRoot%\\System32\\packet.dll", &exe_dir.to_string_lossy()])
-                        .output() {
-                        println!("✅ Copied packet.dll from System32");
-                    } else {
-                        println!("❌ Failed to copy packet.dll");
-                    }
+                if let Ok(_) = std::process::Command::new("cmd")
+                    .args(&["/c", "copy", "%SystemRoot%\\System32\\packet.dll", &exe_dir.to_string_lossy()])
+                    .output() {
+                    println!("✅ Copied packet.dll from System32");
+                } else {
+                    println!("❌ Failed to copy packet.dll");
                 }
             }
         }
     }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn setup_dll_path() {
+    // Sur Linux/macOS, on utilise libpcap qui est installé via le système
+    println!("🐧 Linux/macOS: Utilisation de libpcap système");
 }
 
 #[tauri::command]
