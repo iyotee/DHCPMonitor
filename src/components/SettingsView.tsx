@@ -1,11 +1,65 @@
 import React, { useState } from 'react';
-import { Settings, Monitor, Shield, Info, Download, Github } from 'lucide-react';
+import { Settings, Monitor, Shield, Info, Download, Github, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import { core } from '@tauri-apps/api';
+
+interface UpdateInfo {
+  current_version: string;
+  latest_version?: string;
+  has_update: boolean;
+  release_info?: {
+    name: string;
+    body: string;
+    html_url: string;
+    published_at: string;
+  };
+  download_url?: string;
+}
 
 const SettingsView: React.FC = () => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshInterval, setRefreshInterval] = useState(1000);
   const [maxLogs, setMaxLogs] = useState(1000);
   const [showRawData, setShowRawData] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  const checkForUpdates = async () => {
+    setIsCheckingUpdate(true);
+    setUpdateError(null);
+    
+    try {
+      const isTauri = window.__TAURI__ !== undefined;
+      
+      if (isTauri) {
+        const result = await core.invoke<UpdateInfo>('check_for_updates');
+        setUpdateInfo(result);
+      } else {
+        // Simulation pour la version web
+        const mockUpdateInfo: UpdateInfo = {
+          current_version: "1.1.1",
+          latest_version: "1.1.2",
+          has_update: true,
+          release_info: {
+            name: "Version 1.1.2 - Améliorations",
+            body: "Corrections de bugs et améliorations de performance",
+            html_url: "https://github.com/iyotee/DHCPMonitor/releases/tag/v1.1.2",
+            published_at: new Date().toISOString(),
+          },
+          download_url: "https://github.com/iyotee/DHCPMonitor/releases/download/v1.1.2/DHCPMonitor-Setup.exe",
+        };
+        setUpdateInfo(mockUpdateInfo);
+      }
+    } catch (error) {
+      setUpdateError(error instanceof Error ? error.message : 'Erreur inconnue');
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
+
+  const openDownloadUrl = (url: string) => {
+    window.open(url, '_blank');
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -183,15 +237,114 @@ const SettingsView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4">
-                <button className="flex items-center space-x-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
-                  <Download className="h-4 w-4" />
-                  <span>Vérifier les mises à jour</span>
-                </button>
-                <button className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                  <Github className="h-4 w-4" />
-                  <span>Code source</span>
-                </button>
+              <div className="space-y-4">
+                {/* Vérification de mise à jour */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <button 
+                      onClick={checkForUpdates}
+                      disabled={isCheckingUpdate}
+                      className="flex items-center space-x-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isCheckingUpdate ? (
+                        <Loader className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4" />
+                      )}
+                      <span>{isCheckingUpdate ? 'Vérification...' : 'Vérifier les mises à jour'}</span>
+                    </button>
+                  </div>
+                  
+                  {updateInfo && (
+                    <div className="flex items-center space-x-2">
+                      {updateInfo.has_update ? (
+                        <div className="flex items-center space-x-2 text-green-600 dark:text-green-400">
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="text-sm">Mise à jour disponible</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="text-sm">À jour</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Affichage des informations de mise à jour */}
+                {updateInfo && updateInfo.has_update && updateInfo.release_info && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                          {updateInfo.release_info.name}
+                        </h4>
+                        <span className="text-xs text-blue-600 dark:text-blue-400">
+                          v{updateInfo.latest_version}
+                        </span>
+                      </div>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        {updateInfo.release_info.body}
+                      </p>
+                      <div className="flex items-center space-x-2">
+                        {updateInfo.download_url && (
+                          <button
+                            onClick={() => openDownloadUrl(updateInfo.download_url!)}
+                            className="flex items-center space-x-1 text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                          >
+                            <Download className="h-3 w-3" />
+                            <span>Télécharger</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => openDownloadUrl(updateInfo.release_info!.html_url)}
+                          className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                        >
+                          <Github className="h-3 w-3" />
+                          <span>Voir les détails</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Affichage des erreurs */}
+                {updateError && (
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <div className="flex items-center space-x-2">
+                      <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      <span className="text-sm text-red-700 dark:text-red-300">
+                        Erreur: {updateError}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Informations de version */}
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Version actuelle:</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      {updateInfo?.current_version || "1.1.1"}
+                    </span>
+                  </div>
+                  {updateInfo?.latest_version && updateInfo.latest_version !== updateInfo.current_version && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Dernière version:</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {updateInfo.latest_version}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <button className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                    <Github className="h-4 w-4" />
+                    <span>Code source</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -10,6 +10,7 @@ use std::sync::{Mutex, Arc};
 use std::collections::HashMap;
 use tauri::State;
 use serde::{Serialize, Deserialize};
+use reqwest;
 
 // Application state
 struct AppState {
@@ -36,6 +37,32 @@ pub struct DHCPLog {
     pub option_50: Option<String>,
     pub interface: String,
     pub raw_data: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GitHubRelease {
+    pub tag_name: String,
+    pub name: String,
+    pub body: String,
+    pub html_url: String,
+    pub published_at: String,
+    pub assets: Vec<GitHubAsset>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GitHubAsset {
+    pub name: String,
+    pub browser_download_url: String,
+    pub size: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateInfo {
+    pub current_version: String,
+    pub latest_version: Option<String>,
+    pub has_update: bool,
+    pub release_info: Option<GitHubRelease>,
+    pub download_url: Option<String>,
 }
 
 #[tauri::command]
@@ -244,6 +271,59 @@ fn clear_logs(state: State<AppState>) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+async fn check_for_updates() -> Result<UpdateInfo, String> {
+    let current_version = env!("CARGO_PKG_VERSION").to_string();
+    
+    // URL de l'API GitHub pour les releases
+    let api_url = "https://api.github.com/repos/iyotee/DHCPMonitor/releases/latest";
+    
+    let client = reqwest::Client::new();
+    let response = client
+        .get(api_url)
+        .header("User-Agent", "DHCPMonitor-Update-Checker")
+        .send()
+        .await
+        .map_err(|e| format!("Erreur réseau: {}", e))?;
+    
+    if !response.status().is_success() {
+        return Err(format!("Erreur API GitHub: {}", response.status()));
+    }
+    
+    let release: GitHubRelease = response
+        .json()
+        .await
+        .map_err(|e| format!("Erreur parsing JSON: {}", e))?;
+    
+    // Comparer les versions (supprimer le 'v' du tag si présent)
+    let latest_version = release.tag_name.trim_start_matches('v').to_string();
+    let current_version_clean = current_version.trim_start_matches('v').to_string();
+    
+    // Comparaison simple des versions (pour une implémentation plus robuste, utiliser une lib de comparaison de versions)
+    let has_update = latest_version != current_version_clean;
+    
+    // Trouver l'asset de téléchargement approprié selon la plateforme
+    let download_url = release.assets.iter().find_map(|asset| {
+        if cfg!(target_os = "windows") && asset.name.contains(".exe") {
+            Some(asset.browser_download_url.clone())
+        } else if cfg!(target_os = "linux") && asset.name.contains(".AppImage") {
+            Some(asset.browser_download_url.clone())
+        } else if cfg!(target_os = "macos") && asset.name.contains(".dmg") {
+            Some(asset.browser_download_url.clone())
+        } else {
+            None
+        }
+    });
+    
+    Ok(UpdateInfo {
+        current_version: current_version_clean,
+        latest_version: Some(latest_version),
+        has_update,
+        release_info: Some(release),
+        download_url,
+    })
+}
+
 fn main() {
     // Setup DLL path for Windows
     setup_dll_path();
@@ -261,7 +341,8 @@ fn main() {
                         start_capture,
                         stop_capture,
                         get_logs,
-                        clear_logs
+                        clear_logs,
+                        check_for_updates
                     ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
