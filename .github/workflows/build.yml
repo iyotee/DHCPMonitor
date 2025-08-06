@@ -126,6 +126,31 @@ jobs:
         with:
           path: artifacts
 
+      - name: Prepare release files
+        run: |
+          # Créer un dossier pour les fichiers de release
+          mkdir -p release-files
+          
+          # Copier les fichiers Windows
+          if [ -d "artifacts/dhcp-monitor-windows" ]; then
+            cp -r artifacts/dhcp-monitor-windows/* release-files/
+          fi
+          
+          # Copier les fichiers macOS
+          if [ -d "artifacts/dhcp-monitor-macos" ]; then
+            cp -r artifacts/dhcp-monitor-macos/* release-files/
+          fi
+          
+          # Copier les fichiers Linux (seulement les fichiers nécessaires)
+          if [ -d "artifacts/dhcp-monitor-linux" ]; then
+            # Copier seulement les fichiers de bundle et l'exécutable
+            find artifacts/dhcp-monitor-linux -name "*.AppImage" -o -name "dhcp-monitor" -o -name "*.deb" -o -name "*.rpm" | xargs -I {} cp {} release-files/ 2>/dev/null || true
+          fi
+          
+          # Lister les fichiers préparés
+          echo "📦 Fichiers préparés pour la release :"
+          ls -la release-files/
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -173,10 +198,7 @@ jobs:
             ### 🐛 Support
             - Consulter le [README principal](https://github.com/iyotee/DHCPMonitor#readme)
             - Ouvrir une [issue](https://github.com/iyotee/DHCPMonitor/issues) en cas de problème
-          files: |
-            artifacts/dhcp-monitor-windows/**/*
-            artifacts/dhcp-monitor-macos/**/*
-            artifacts/dhcp-monitor-linux/**/*
+          files: release-files/*
           draft: false
           prerelease: false
         env:
