@@ -14,8 +14,8 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
-REM Forcer le changement vers le répertoire du script
-cd /d "%~dp0"
+REM Forcer le changement vers le répertoire racine du projet
+cd /d "%~dp0\.."
 
 echo DHCP Monitor - Option 50 Tracker
 echo ================================
@@ -59,6 +59,15 @@ echo.
 echo NOTE: Application lancée avec privilèges administrateur
 echo pour capturer les paquets DHCP.
 echo.
+
+echo Vérification et création du build frontend...
+if not exist "dist" (
+    echo Création du build frontend...
+    npm run build
+    echo Build frontend créé.
+) else (
+    echo Build frontend trouvé.
+)
 
 echo Démarrage du serveur de développement...
 echo Attente du démarrage du serveur...
