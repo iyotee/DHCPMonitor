@@ -9,6 +9,9 @@ dist/
 build/
 target/
 
+# Release files (uploaded directly to GitHub releases)
+release/
+
 # Environment variables
 .env
 .env.local
