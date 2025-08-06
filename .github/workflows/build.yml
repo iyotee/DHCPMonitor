@@ -172,17 +172,17 @@ jobs:
             ### 📦 Fichiers Inclus
             
             #### Windows
-            - `DHCP Monitor Pro_1.1.7_x64-setup.exe` - Installateur NSIS
-            - `DHCP Monitor Pro_1.1.7_x64_en-US.msi` - Package MSI
+            - `DHCP Monitor Pro_1.1.8_x64-setup.exe` - Installateur NSIS
+            - `DHCP Monitor Pro_1.1.8_x64_en-US.msi` - Package MSI
             - `dhcp-monitor.exe` + DLLs - Version portable
             
             #### macOS
             - `DHCP Monitor Pro.app` - Application macOS
-            - `DHCP Monitor Pro_1.1.7_x64.dmg` - Installateur DMG
+            - `DHCP Monitor Pro_1.1.8_x64.dmg` - Installateur DMG
             
             #### Linux
             - `dhcp-monitor` - Exécutable Linux
-            - `DHCP Monitor Pro_1.1.7_amd64.AppImage` - AppImage
+            - `DHCP Monitor Pro_1.1.8_amd64.AppImage` - AppImage
             
             ### 🔧 Installation
             
