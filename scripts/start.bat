@@ -10,7 +10,7 @@ if %errorlevel% neq 0 (
     echo.
     pause
     echo Tentative d'élévation avec VBS...
-    cscript //nologo elevate.vbs "%~dp0"
+    cscript //nologo "%~dp0\elevate.vbs" "%~dp0"
     exit /b
 )
 
