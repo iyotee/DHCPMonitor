@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { Settings, Monitor, Shield, Info, Download, Github, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { core } from '@tauri-apps/api';
 
+// Déclaration globale pour Tauri
+declare global {
+  interface Window {
+    __TAURI__?: any;
+  }
+}
+
 interface UpdateInfo {
   current_version: string;
   latest_version?: string;

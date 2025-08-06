@@ -37,6 +37,7 @@ jobs:
           npx @tauri-apps/cli build
           
       - name: Create portable package
+        shell: cmd
         run: |
           # Create portable directory in the root
           if exist "portable" rmdir /s /q "portable"
