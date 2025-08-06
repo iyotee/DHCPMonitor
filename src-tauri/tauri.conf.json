@@ -44,9 +44,6 @@
     "category": "DeveloperTool",
     "shortDescription": "DHCP Monitor with Option 50 detection",
     "longDescription": "Modern DHCP monitoring application with specific Option 50 detection",
-    "deb": {
-      "depends": ["libpcap-dev"]
-    },
     "macOS": {
       "minimumSystemVersion": "10.13.0"
     },
