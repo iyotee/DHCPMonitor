@@ -89,6 +89,7 @@ jobs:
             src-tauri/target/release/bundle/
             src-tauri/target/release/
             portable/
+          retention-days: 1
 
   build-macos:
     runs-on: macos-latest
@@ -123,6 +124,7 @@ jobs:
           path: |
             src-tauri/target/release/bundle/
             src-tauri/target/release/
+          retention-days: 1
 
   build-linux:
     runs-on: ubuntu-latest
@@ -162,6 +164,7 @@ jobs:
           path: |
             src-tauri/target/release/bundle/
             src-tauri/target/release/
+          retention-days: 1
 
   release:
     needs: [build-windows, build-macos, build-linux]
@@ -179,68 +182,22 @@ jobs:
 
       - name: Prepare release files
         run: |
-           # Créer un dossier pour les fichiers de release
            mkdir -p release-files
            
-           echo "📦 Préparation des fichiers de release..."
-           echo "📁 Contenu des artifacts :"
-           find artifacts -type f -name "*" | head -20
-           
-           # Copier les fichiers Windows
+           # Copier TOUS les fichiers des artifacts
            if [ -d "artifacts/dhcp-monitor-windows" ]; then
-             echo "🪟 Copie des fichiers Windows..."
-             # Copier les fichiers du dossier bundle (installateurs)
-             if [ -d "artifacts/dhcp-monitor-windows/bundle" ]; then
-               echo "📦 Copie des installateurs Windows..."
-               cp -r artifacts/dhcp-monitor-windows/bundle/* release-files/ 2>/dev/null || true
-             fi
-             # Copier les fichiers du dossier portable
-             if [ -d "artifacts/dhcp-monitor-windows/portable" ]; then
-               echo "📦 Copie du package portable..."
-               cp -r artifacts/dhcp-monitor-windows/portable/* release-files/ 2>/dev/null || true
-             fi
-             # Copier les fichiers du dossier release (exécutables)
-             if [ -d "artifacts/dhcp-monitor-windows/release" ]; then
-               echo "📦 Copie des exécutables Windows..."
-               cp -r artifacts/dhcp-monitor-windows/release/* release-files/ 2>/dev/null || true
-             fi
+             cp -r artifacts/dhcp-monitor-windows/* release-files/ 2>/dev/null || true
            fi
            
-           # Copier les fichiers macOS
            if [ -d "artifacts/dhcp-monitor-macos" ]; then
-             echo "🍎 Copie des fichiers macOS..."
-             # Copier les fichiers du dossier bundle (installateurs)
-             if [ -d "artifacts/dhcp-monitor-macos/bundle" ]; then
-               echo "📦 Copie des installateurs macOS..."
-               cp -r artifacts/dhcp-monitor-macos/bundle/* release-files/ 2>/dev/null || true
-             fi
-             # Copier les fichiers du dossier release (exécutables)
-             if [ -d "artifacts/dhcp-monitor-macos/release" ]; then
-               echo "📦 Copie des exécutables macOS..."
-               cp -r artifacts/dhcp-monitor-macos/release/* release-files/ 2>/dev/null || true
-             fi
+             cp -r artifacts/dhcp-monitor-macos/* release-files/ 2>/dev/null || true
            fi
            
-           # Copier les fichiers Linux
            if [ -d "artifacts/dhcp-monitor-linux" ]; then
-             echo "🐧 Copie des fichiers Linux..."
-             # Copier les fichiers du dossier bundle (installateurs)
-             if [ -d "artifacts/dhcp-monitor-linux/bundle" ]; then
-               echo "📦 Copie des installateurs Linux..."
-               cp -r artifacts/dhcp-monitor-linux/bundle/* release-files/ 2>/dev/null || true
-             fi
-             # Copier les fichiers du dossier release (exécutables)
-             if [ -d "artifacts/dhcp-monitor-linux/release" ]; then
-               echo "📦 Copie des exécutables Linux..."
-               cp -r artifacts/dhcp-monitor-linux/release/* release-files/ 2>/dev/null || true
-             fi
+             cp -r artifacts/dhcp-monitor-linux/* release-files/ 2>/dev/null || true
            fi
            
-           # Lister les fichiers préparés
-           echo "📦 Fichiers préparés pour la release :"
-           ls -la release-files/
-           echo "📊 Taille des fichiers :"
-           du -h release-files/* 2>/dev/null || true
+           find release-files -type f -name "*"
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
