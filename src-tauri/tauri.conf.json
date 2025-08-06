@@ -36,16 +36,8 @@
       "icons/icon.icns"
     ],
     "resources": [
-      {
-        "src": "wpcap.dll",
-        "target": "wpcap.dll",
-        "platform": "windows"
-      },
-      {
-        "src": "packet.dll",
-        "target": "packet.dll",
-        "platform": "windows"
-      }
+      "wpcap.dll",
+      "packet.dll"
     ],
     "externalBin": [],
     "copyright": "Copyright (c) 2024 DHCP Monitor",
