@@ -34,7 +34,52 @@ jobs:
       - name: Build Tauri app
         run: |
           cd src-tauri
-          npx @tauri-apps/cli build --target x86_64-pc-windows-msvc
+          npx @tauri-apps/cli build
+          
+      - name: Create portable package
+        shell: cmd
+        run: |
+          REM Create portable directory in the root
+          if exist "portable" rmdir /s /q "portable"
+          mkdir "portable"
+          
+          REM Copy executable
+          copy "src-tauri\target\release\dhcp-monitor.exe" "portable\DHCP Monitor Pro.exe"
+          
+          REM Copy DLLs from System32 (optional - may not exist in GitHub Actions environment)
+          if exist "%SystemRoot%\System32\wpcap.dll" (
+            copy "%SystemRoot%\System32\wpcap.dll" "portable\" >nul
+            echo wpcap.dll copied from System32
+          ) else (
+            echo wpcap.dll not found in System32
+          )
+          if exist "%SystemRoot%\System32\packet.dll" (
+            copy "%SystemRoot%\System32\packet.dll" "portable\" >nul
+            echo packet.dll copied from System32
+          ) else (
+            echo packet.dll not found in System32
+          )
+          
+          REM Create README
+          echo DHCP Monitor Pro - Portable Version > "portable\README.txt"
+          echo ================================== >> "portable\README.txt"
+          echo. >> "portable\README.txt"
+          echo This is a portable version of DHCP Monitor Pro. >> "portable\README.txt"
+          echo. >> "portable\README.txt"
+          echo Requirements: >> "portable\README.txt"
+          echo - Windows 10 or later >> "portable\README.txt"
+          echo - Npcap installed (https://npcap.com/) >> "portable\README.txt"
+          echo - Administrator privileges to capture packets >> "portable\README.txt"
+          echo. >> "portable\README.txt"
+          echo Usage: >> "portable\README.txt"
+          echo 1. Right-click "DHCP Monitor Pro.exe" >> "portable\README.txt"
+          echo 2. Select "Run as administrator" >> "portable\README.txt"
+          echo 3. Select your network interface >> "portable\README.txt"
+          echo 4. Start capturing DHCP packets >> "portable\README.txt"
+          echo. >> "portable\README.txt"
+          echo Note: This portable version includes the required Npcap DLLs. >> "portable\README.txt"
+          
+          echo ✅ Portable package created in "portable" directory
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -42,7 +87,8 @@ jobs:
           name: dhcp-monitor-windows
           path: |
             src-tauri/target/release/bundle/
-            src-tauri/target/release/dhcp-monitor.exe
+            src-tauri/target/release/
+            portable/
 
   build-macos:
     runs-on: macos-latest
@@ -65,29 +111,10 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install Rust targets
-        run: |
-          rustup target add x86_64-apple-darwin
-          rustup target add aarch64-apple-darwin
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install Python dependencies
-        run: |
-          pip install Pillow
-
-      - name: Generate macOS icon
-        run: |
-          cd src-tauri/icons
-          python3 create_icns.py
-
       - name: Build Tauri app
         run: |
           cd src-tauri
-          npx @tauri-apps/cli build --target x86_64-apple-darwin
+          npx @tauri-apps/cli build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -95,6 +122,7 @@ jobs:
           name: dhcp-monitor-macos
           path: |
             src-tauri/target/release/bundle/
+            src-tauri/target/release/
 
   build-linux:
     runs-on: ubuntu-latest
@@ -125,7 +153,7 @@ jobs:
       - name: Build Tauri app
         run: |
           cd src-tauri
-          npx @tauri-apps/cli build --target x86_64-unknown-linux-gnu
+          npx @tauri-apps/cli build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -133,7 +161,7 @@ jobs:
           name: dhcp-monitor-linux
           path: |
             src-tauri/target/release/bundle/
-            src-tauri/target/release/dhcp-monitor
+            src-tauri/target/release/
 
   release:
     needs: [build-windows, build-macos, build-linux]
@@ -151,27 +179,68 @@ jobs:
 
       - name: Prepare release files
         run: |
-          mkdir -p release-files
-          
-          echo "📦 Préparation des fichiers de release..."
-          
-          # Copier tous les fichiers des artifacts téléchargés
-          if [ -d "artifacts" ]; then
-            echo "📁 Copie de tous les fichiers des artifacts..."
-            # Iterate through each downloaded artifact directory
-            for artifact_dir in artifacts/*; do
-              if [ -d "$artifact_dir" ]; then
-                echo "📂 Copie de $artifact_dir"
-                cp -r "$artifact_dir"/* release-files/ 2>/dev/null || true
-              fi
-            done
-          fi
-          
-          # Lister les fichiers préparés
-          echo "📦 Fichiers préparés pour la release :"
-          ls -la release-files/
-          echo "📊 Taille des fichiers :"
-          du -h release-files/* 2>/dev/null || true
+           # Créer un dossier pour les fichiers de release
+           mkdir -p release-files
+           
+           echo "📦 Préparation des fichiers de release..."
+           echo "📁 Contenu des artifacts :"
+           find artifacts -type f -name "*" | head -20
+           
+           # Copier les fichiers Windows
+           if [ -d "artifacts/dhcp-monitor-windows" ]; then
+             echo "🪟 Copie des fichiers Windows..."
+             # Copier les fichiers du dossier bundle (installateurs)
+             if [ -d "artifacts/dhcp-monitor-windows/bundle" ]; then
+               echo "📦 Copie des installateurs Windows..."
+               cp -r artifacts/dhcp-monitor-windows/bundle/* release-files/ 2>/dev/null || true
+             fi
+             # Copier les fichiers du dossier portable
+             if [ -d "artifacts/dhcp-monitor-windows/portable" ]; then
+               echo "📦 Copie du package portable..."
+               cp -r artifacts/dhcp-monitor-windows/portable/* release-files/ 2>/dev/null || true
+             fi
+             # Copier les fichiers du dossier release (exécutables)
+             if [ -d "artifacts/dhcp-monitor-windows/release" ]; then
+               echo "📦 Copie des exécutables Windows..."
+               cp -r artifacts/dhcp-monitor-windows/release/* release-files/ 2>/dev/null || true
+             fi
+           fi
+           
+           # Copier les fichiers macOS
+           if [ -d "artifacts/dhcp-monitor-macos" ]; then
+             echo "🍎 Copie des fichiers macOS..."
+             # Copier les fichiers du dossier bundle (installateurs)
+             if [ -d "artifacts/dhcp-monitor-macos/bundle" ]; then
+               echo "📦 Copie des installateurs macOS..."
+               cp -r artifacts/dhcp-monitor-macos/bundle/* release-files/ 2>/dev/null || true
+             fi
+             # Copier les fichiers du dossier release (exécutables)
+             if [ -d "artifacts/dhcp-monitor-macos/release" ]; then
+               echo "📦 Copie des exécutables macOS..."
+               cp -r artifacts/dhcp-monitor-macos/release/* release-files/ 2>/dev/null || true
+             fi
+           fi
+           
+           # Copier les fichiers Linux
+           if [ -d "artifacts/dhcp-monitor-linux" ]; then
+             echo "🐧 Copie des fichiers Linux..."
+             # Copier les fichiers du dossier bundle (installateurs)
+             if [ -d "artifacts/dhcp-monitor-linux/bundle" ]; then
+               echo "📦 Copie des installateurs Linux..."
+               cp -r artifacts/dhcp-monitor-linux/bundle/* release-files/ 2>/dev/null || true
+             fi
+             # Copier les fichiers du dossier release (exécutables)
+             if [ -d "artifacts/dhcp-monitor-linux/release" ]; then
+               echo "📦 Copie des exécutables Linux..."
+               cp -r artifacts/dhcp-monitor-linux/release/* release-files/ 2>/dev/null || true
+             fi
+           fi
+           
+           # Lister les fichiers préparés
+           echo "📦 Fichiers préparés pour la release :"
+           ls -la release-files/
+           echo "📊 Taille des fichiers :"
+           du -h release-files/* 2>/dev/null || true
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -188,17 +257,17 @@ jobs:
             ### 📦 Fichiers Inclus
             
             #### Windows
-            - `DHCP Monitor Pro_1.1.26_x64-setup.exe` - Installateur NSIS
-            - `DHCP Monitor Pro_1.1.26_x64_en-US.msi` - Package MSI
+                         - `DHCP Monitor Pro_1.1.35_x64-setup.exe` - Installateur NSIS
+             - `DHCP Monitor Pro_1.1.35_x64_en-US.msi` - Package MSI
             - `dhcp-monitor.exe` + DLLs - Version portable
             
             #### macOS
             - `DHCP Monitor Pro.app` - Application macOS
-            - `DHCP Monitor Pro_1.1.26_x64.dmg` - Installateur DMG
+                         - `DHCP Monitor Pro_1.1.35_x64.dmg` - Installateur DMG
             
             #### Linux
             - `dhcp-monitor` - Exécutable Linux
-            - `DHCP Monitor Pro_1.1.26_amd64.AppImage` - AppImage
+                         - `DHCP Monitor Pro_1.1.35_amd64.AppImage` - AppImage
             
             ### 🔧 Installation
             

@@ -38,8 +38,6 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-
-
 echo All dependencies are installed
 echo
 
