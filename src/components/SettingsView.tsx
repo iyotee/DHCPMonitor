@@ -37,7 +37,7 @@ const SettingsView: React.FC = () => {
       } else {
         // Simulation pour la version web
         const mockUpdateInfo: UpdateInfo = {
-          current_version: "1.1.30",
+          current_version: "1.1.32",
           latest_version: "1.1.9",
           has_update: true,
           release_info: {
@@ -229,7 +229,7 @@ const SettingsView: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Version:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">1.1.30</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">1.1.32</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Licence:</span>
@@ -326,7 +326,7 @@ const SettingsView: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Version actuelle:</span>
                                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                       {updateInfo?.current_version || "1.1.30"}
+                       {updateInfo?.current_version || "1.1.32"}
                      </span>
                   </div>
                   {updateInfo?.latest_version && updateInfo.latest_version !== updateInfo.current_version && (
