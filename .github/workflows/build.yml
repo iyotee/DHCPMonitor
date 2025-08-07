@@ -155,10 +155,16 @@ jobs:
           
           echo "📦 Préparation des fichiers de release..."
           
-          # Copier seulement les fichiers d'installateurs des artifacts
+          # Copier tous les fichiers des artifacts téléchargés
           if [ -d "artifacts" ]; then
-            echo "📁 Copie des installateurs..."
-            find artifacts -name "*.exe" -o -name "*.msi" -o -name "*.dmg" -o -name "*.app" -o -name "*.AppImage" -o -name "dhcp-monitor" | xargs -I {} cp {} release-files/
+            echo "📁 Copie de tous les fichiers des artifacts..."
+            # Iterate through each downloaded artifact directory
+            for artifact_dir in artifacts/*; do
+              if [ -d "$artifact_dir" ]; then
+                echo "📂 Copie de $artifact_dir"
+                cp -r "$artifact_dir"/* release-files/ 2>/dev/null || true
+              fi
+            done
           fi
           
           # Lister les fichiers préparés
