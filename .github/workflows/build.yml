@@ -41,8 +41,9 @@ jobs:
         with:
           name: dhcp-monitor-windows
           path: |
-            src-tauri/target/release/bundle/
-            src-tauri/target/release/
+            src-tauri/target/release/bundle/msi/
+            src-tauri/target/release/bundle/nsis/
+            src-tauri/target/release/dhcp-monitor.exe
 
   build-macos:
     runs-on: macos-latest
@@ -94,8 +95,8 @@ jobs:
         with:
           name: dhcp-monitor-macos
           path: |
-            src-tauri/target/release/bundle/
-            src-tauri/target/release/
+            src-tauri/target/release/bundle/dmg/
+            src-tauri/target/release/bundle/app/
 
   build-linux:
     runs-on: ubuntu-latest
@@ -133,8 +134,8 @@ jobs:
         with:
           name: dhcp-monitor-linux
           path: |
-            src-tauri/target/release/bundle/
-            src-tauri/target/release/
+            src-tauri/target/release/bundle/appimage/
+            src-tauri/target/release/dhcp-monitor
 
   release:
     needs: [build-windows, build-macos, build-linux]
@@ -156,22 +157,10 @@ jobs:
           
           echo "📦 Préparation des fichiers de release..."
           
-          # Copier les fichiers Windows spécifiques
-          if [ -d "artifacts/dhcp-monitor-windows" ]; then
-            echo "🪟 Copie des fichiers Windows..."
-            find artifacts/dhcp-monitor-windows -name "*.exe" -o -name "*.msi" -o -name "*.dll" | xargs -I {} cp {} release-files/
-          fi
-          
-          # Copier les fichiers macOS spécifiques
-          if [ -d "artifacts/dhcp-monitor-macos" ]; then
-            echo "🍎 Copie des fichiers macOS..."
-            find artifacts/dhcp-monitor-macos -name "*.app" -o -name "*.dmg" | xargs -I {} cp -r {} release-files/
-          fi
-          
-          # Copier les fichiers Linux spécifiques
-          if [ -d "artifacts/dhcp-monitor-linux" ]; then
-            echo "🐧 Copie des fichiers Linux..."
-            find artifacts/dhcp-monitor-linux -name "*.AppImage" -o -name "dhcp-monitor" | xargs -I {} cp {} release-files/
+          # Copier tous les fichiers des artifacts
+          if [ -d "artifacts" ]; then
+            echo "📁 Copie de tous les fichiers..."
+            find artifacts -type f -name "*.exe" -o -name "*.msi" -o -name "*.dmg" -o -name "*.app" -o -name "*.AppImage" -o -name "dhcp-monitor" | xargs -I {} cp {} release-files/
           fi
           
           # Lister les fichiers préparés
