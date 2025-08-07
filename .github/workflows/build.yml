@@ -34,8 +34,7 @@ jobs:
       - name: Build Tauri app
         run: |
           cd src-tauri
-          npx @tauri-apps/cli build --target msi
-          npx @tauri-apps/cli build --target nsis
+          npx @tauri-apps/cli build --target x86_64-pc-windows-msvc
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -83,8 +82,7 @@ jobs:
       - name: Build Tauri app
         run: |
           cd src-tauri
-          npx @tauri-apps/cli build --target dmg
-          npx @tauri-apps/cli build --target app
+          npx @tauri-apps/cli build --target x86_64-apple-darwin
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -123,7 +121,7 @@ jobs:
       - name: Build Tauri app
         run: |
           cd src-tauri
-          npx @tauri-apps/cli build --target appimage
+          npx @tauri-apps/cli build --target x86_64-unknown-linux-gnu
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
