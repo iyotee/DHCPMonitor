@@ -35,8 +35,6 @@ jobs:
         run: |
           cd src-tauri
           npx @tauri-apps/cli build
-          
-
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -44,7 +42,7 @@ jobs:
           name: dhcp-monitor-windows
           path: |
             src-tauri/target/release/bundle/
-          retention-days: 1
+            src-tauri/target/release/
 
   build-macos:
     runs-on: macos-latest
@@ -78,7 +76,7 @@ jobs:
           name: dhcp-monitor-macos
           path: |
             src-tauri/target/release/bundle/
-          retention-days: 1
+            src-tauri/target/release/
 
   build-linux:
     runs-on: ubuntu-latest
@@ -117,7 +115,7 @@ jobs:
           name: dhcp-monitor-linux
           path: |
             src-tauri/target/release/bundle/
-          retention-days: 1
+            src-tauri/target/release/
 
   release:
     needs: [build-windows, build-macos, build-linux]
@@ -135,22 +133,36 @@ jobs:
 
       - name: Prepare release files
         run: |
-           mkdir -p release-files
-           
-           # Copier TOUS les fichiers des artifacts
-           if [ -d "artifacts/dhcp-monitor-windows" ]; then
-             cp -r artifacts/dhcp-monitor-windows/* release-files/ 2>/dev/null || true
-           fi
-           
-           if [ -d "artifacts/dhcp-monitor-macos" ]; then
-             cp -r artifacts/dhcp-monitor-macos/* release-files/ 2>/dev/null || true
-           fi
-           
-           if [ -d "artifacts/dhcp-monitor-linux" ]; then
-             cp -r artifacts/dhcp-monitor-linux/* release-files/ 2>/dev/null || true
-           fi
-           
-           find release-files -type f -name "*"
+          # Créer un dossier pour les fichiers de release
+          mkdir -p release-files
+          
+          echo "📦 Préparation des fichiers de release..."
+          echo "📁 Contenu des artifacts :"
+          find artifacts -type f -name "*" | head -20
+          
+          # Copier les fichiers Windows
+          if [ -d "artifacts/dhcp-monitor-windows" ]; then
+            echo "🪟 Copie des fichiers Windows..."
+            cp -r artifacts/dhcp-monitor-windows/* release-files/ 2>/dev/null || true
+          fi
+          
+          # Copier les fichiers macOS
+          if [ -d "artifacts/dhcp-monitor-macos" ]; then
+            echo "🍎 Copie des fichiers macOS..."
+            cp -r artifacts/dhcp-monitor-macos/* release-files/ 2>/dev/null || true
+          fi
+          
+          # Copier les fichiers Linux
+          if [ -d "artifacts/dhcp-monitor-linux" ]; then
+            echo "🐧 Copie des fichiers Linux..."
+            cp -r artifacts/dhcp-monitor-linux/* release-files/ 2>/dev/null || true
+          fi
+          
+          # Lister les fichiers préparés
+          echo "📦 Fichiers préparés pour la release :"
+          ls -la release-files/
+          echo "📊 Taille des fichiers :"
+          du -h release-files/* 2>/dev/null || true
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -167,17 +179,17 @@ jobs:
             ### 📦 Fichiers Inclus
             
             #### Windows
-                         - `DHCP Monitor Pro_1.1.23_x64-setup.exe` - Installateur NSIS
-             - `DHCP Monitor Pro_1.1.23_x64_en-US.msi` - Package MSI
+            - `DHCP Monitor Pro_1.1.26_x64-setup.exe` - Installateur NSIS
+            - `DHCP Monitor Pro_1.1.26_x64_en-US.msi` - Package MSI
             - `dhcp-monitor.exe` + DLLs - Version portable
             
             #### macOS
             - `DHCP Monitor Pro.app` - Application macOS
-                         - `DHCP Monitor Pro_1.1.23_x64.dmg` - Installateur DMG
+            - `DHCP Monitor Pro_1.1.26_x64.dmg` - Installateur DMG
             
             #### Linux
             - `dhcp-monitor` - Exécutable Linux
-                         - `DHCP Monitor Pro_1.1.23_amd64.AppImage` - AppImage
+            - `DHCP Monitor Pro_1.1.26_amd64.AppImage` - AppImage
             
             ### 🔧 Installation
             
