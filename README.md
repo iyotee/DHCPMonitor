@@ -21,7 +21,6 @@
 - [📦 Installation](#-installation)
 - [🛠️ Développement](#️-développement)
 - [📊 Architecture Technique](#-architecture-technique)
-- [🔧 Configuration](#-configuration)
 - [🐛 Dépannage](#-dépannage)
 - [🤝 Contribution](#-contribution)
 - [📄 Licence](#-licence)
@@ -40,20 +39,9 @@
 
 ### 🖼️ Interface Utilisateur Moderne
 - **Interface responsive** avec sidebar de navigation
-- **Onglets spécialisés** :
-  - 📝 **Logs** : Affichage coloré en temps réel
-  - 🎯 **Option 50** : Vue filtrée des requêtes d'IP
-  - 📊 **Statistiques** : Graphiques et métriques
-  - 🌐 **Réseau** : Interfaces détectées
-  - ⚙️ **Paramètres** : Configuration avancée
+- **Vues spécialisées** pour différents aspects de la surveillance
 - **Thèmes dynamiques** : Sombre / Clair / Auto (détection système)
-- **Logs colorés** avec code couleur intuitif :
-  - 🟢 **Succès** : Paquets capturés avec succès
-  - 🔴 **Erreurs** : Erreurs de capture ou réseau
-  - 🟠 **Avertissements** : Problèmes mineurs
-  - 🟣 **Option 50** : Requêtes d'IP spécifiques
-  - 🟡 **Gateway** : Activité de la passerelle
-  - 🔵 **Informations** : Messages généraux
+- **Affichage en temps réel** des données capturées
 
 ### 📈 Analytics et Métriques
 - **Compteurs en temps réel** :
@@ -235,48 +223,6 @@ DHCPMonitor/
 - **dhcp_capture.rs** : Capture et parsing DHCP
 - **network_interfaces.rs** : Détection des interfaces
 - **main.rs** : Orchestration et communication
-
----
-
-## 🔧 Configuration
-
-### ⚙️ Variables d'Environnement
-
-| Variable | Description | Défaut |
-|----------|-------------|--------|
-| `TAURI_DEBUG` | Mode debug (développement) | `false` |
-| `RUST_LOG` | Niveau de log Rust | `info` |
-| `DHCP_CAPTURE_TIMEOUT` | Timeout de capture (ms) | `1000` |
-| `MAX_PACKETS` | Nombre max de paquets | `10000` |
-
-### 🎛️ Paramètres de l'Application
-
-| Paramètre | Plage | Défaut | Description |
-|-----------|-------|--------|-------------|
-| **Intervalle d'actualisation** | 500ms - 10s | 1000ms | Fréquence de mise à jour |
-| **Nombre max de logs** | 100 - 10000 | 1000 | Limite d'affichage |
-| **Affichage données brutes** | Booléen | `false` | Mode debug |
-| **Thème** | Auto/Sombre/Clair | `Auto` | Apparence |
-
-### 📊 Configuration Réseau
-
-```json
-{
-  "capture": {
-    "timeout": 1000,
-    "promiscuous": true,
-    "filter": "udp port 67 or udp port 68"
-  },
-  "interface": {
-    "auto_detect": true,
-    "preferred": "eth0"
-  },
-  "logging": {
-    "level": "info",
-    "max_entries": 1000
-  }
-}
-```
 
 ---
 

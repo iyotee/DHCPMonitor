@@ -34,7 +34,8 @@ jobs:
       - name: Build Tauri app
         run: |
           cd src-tauri
-          npx @tauri-apps/cli build
+          npx @tauri-apps/cli build --target msi
+          npx @tauri-apps/cli build --target nsis
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -65,10 +66,25 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          pip install Pillow
+
+      - name: Generate macOS icon
+        run: |
+          cd src-tauri/icons
+          python3 create_icns.py
+
       - name: Build Tauri app
         run: |
           cd src-tauri
-          npx @tauri-apps/cli build
+          npx @tauri-apps/cli build --target dmg
+          npx @tauri-apps/cli build --target app
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -107,7 +123,7 @@ jobs:
       - name: Build Tauri app
         run: |
           cd src-tauri
-          npx @tauri-apps/cli build
+          npx @tauri-apps/cli build --target appimage
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -133,29 +149,26 @@ jobs:
 
       - name: Prepare release files
         run: |
-          # Créer un dossier pour les fichiers de release
           mkdir -p release-files
           
           echo "📦 Préparation des fichiers de release..."
-          echo "📁 Contenu des artifacts :"
-          find artifacts -type f -name "*" | head -20
           
-          # Copier les fichiers Windows
+          # Copier les fichiers Windows spécifiques
           if [ -d "artifacts/dhcp-monitor-windows" ]; then
             echo "🪟 Copie des fichiers Windows..."
-            cp -r artifacts/dhcp-monitor-windows/* release-files/ 2>/dev/null || true
+            find artifacts/dhcp-monitor-windows -name "*.exe" -o -name "*.msi" -o -name "*.dll" | xargs -I {} cp {} release-files/
           fi
           
-          # Copier les fichiers macOS
+          # Copier les fichiers macOS spécifiques
           if [ -d "artifacts/dhcp-monitor-macos" ]; then
             echo "🍎 Copie des fichiers macOS..."
-            cp -r artifacts/dhcp-monitor-macos/* release-files/ 2>/dev/null || true
+            find artifacts/dhcp-monitor-macos -name "*.app" -o -name "*.dmg" | xargs -I {} cp -r {} release-files/
           fi
           
-          # Copier les fichiers Linux
+          # Copier les fichiers Linux spécifiques
           if [ -d "artifacts/dhcp-monitor-linux" ]; then
             echo "🐧 Copie des fichiers Linux..."
-            cp -r artifacts/dhcp-monitor-linux/* release-files/ 2>/dev/null || true
+            find artifacts/dhcp-monitor-linux -name "*.AppImage" -o -name "dhcp-monitor" | xargs -I {} cp {} release-files/
           fi
           
           # Lister les fichiers préparés

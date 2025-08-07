@@ -1,5 +1,0 @@
-[33m16f16c0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;33mtag: [m[1;33mv1.1.24[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Release 1.1.24 - Fix GitHub Actions cross-platform builds
-[33m7394e23[m[33m ([m[1;33mtag: [m[1;33mv1.1.23[m[33m)[m Version 1.1.23: Correction de la copie des fichiers bundle et portable dans les releases
-[33m53659a1[m[33m ([m[1;33mtag: [m[1;33mv1.1.22[m[33m)[m Version 1.1.22: Correction des DLLs avec conditions if exist pour éviter exit code 1
-[33m41a8132[m[33m ([m[1;33mtag: [m[1;33mv1.1.21[m[33m)[m Version 1.1.21: Correction des DLLs pour le build portable - copie optionnelle depuis System32
-[33mc137648[m[33m ([m[1;33mtag: [m[1;33mv1.1.20[m[33m)[m Version 1.1.20: Correction des versions et remise des DLLs obligatoires
