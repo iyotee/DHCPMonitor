@@ -7,7 +7,6 @@ mod network_interfaces;
 use dhcp_capture::DHCPCapture;
 use network_interfaces::get_network_interfaces;
 use std::sync::{Mutex, Arc};
-use std::collections::HashMap;
 use tauri::State;
 use serde::{Serialize, Deserialize};
 use reqwest;
@@ -131,8 +130,8 @@ fn setup_dll_path() {
             }
             
             // Try to load DLLs directly from System32 first
-            let system32_wpcap = std::path::PathBuf::from("%SystemRoot%\\System32\\wpcap.dll");
-            let system32_packet = std::path::PathBuf::from("%SystemRoot%\\System32\\packet.dll");
+            let _system32_wpcap = std::path::PathBuf::from("%SystemRoot%\\System32\\wpcap.dll");
+            let _system32_packet = std::path::PathBuf::from("%SystemRoot%\\System32\\packet.dll");
             
             println!("🔄 Trying to load DLLs from System32...");
             unsafe {
@@ -192,6 +191,12 @@ fn start_capture(interface_name: String, state: State<AppState>) -> Result<(), S
     
     println!("✅ Npcap check passed");
     
+    // Clear any existing logs when starting new capture
+    if let Ok(mut logs) = state.logs.lock() {
+        logs.clear();
+        println!("📝 Logs cleared for new capture session");
+    }
+    
     let capture = DHCPCapture::new(&interface_name)
         .map_err(|e| {
             println!("❌ DHCPCapture::new failed: {}", e);
@@ -225,14 +230,24 @@ fn start_capture(interface_name: String, state: State<AppState>) -> Result<(), S
                         raw_data: format!("{:?}", packet.raw_data),
                     };
                     
+                    println!("📦 Packet captured: {} from {} to {}", 
+                             log.packet_type, log.source_ip, log.destination_ip);
+                    
                     // Ajouter le log à l'état de l'application
                     if let Ok(mut logs) = logs_arc.lock() {
                         logs.push(log);
+                        println!("📝 Log added to state, total logs: {}", logs.len());
+                    } else {
+                        eprintln!("❌ Failed to lock logs for writing");
                     }
                 }) {
-                    eprintln!("Erreur de capture: {}", e);
+                    eprintln!("❌ Erreur de capture: {}", e);
                 }
+            } else {
+                eprintln!("❌ No capture instance found in state");
             }
+        } else {
+            eprintln!("❌ Failed to lock capture state");
         }
     });
 
@@ -269,6 +284,35 @@ fn clear_logs(state: State<AppState>) -> Result<(), String> {
     let mut logs = state.logs.lock().map_err(|_| "Erreur de verrouillage".to_string())?;
     logs.clear();
     Ok(())
+}
+
+#[tauri::command]
+fn test_capture(state: State<AppState>) -> Result<String, String> {
+    println!("🧪 Testing capture functionality...");
+    
+    // Check if we have any logs
+    let log_count = if let Ok(logs) = state.logs.lock() {
+        logs.len()
+    } else {
+        return Err("Failed to access logs".to_string());
+    };
+    
+    // Check if capture is active
+    let capture_active = if let Ok(capture) = state.capture.lock() {
+        capture.is_some()
+    } else {
+        return Err("Failed to access capture state".to_string());
+    };
+    
+    let status = format!(
+        "Capture Status:\n- Logs count: {}\n- Capture active: {}\n- Timestamp: {}",
+        log_count,
+        capture_active,
+        chrono::Utc::now().to_rfc3339()
+    );
+    
+    println!("{}", status);
+    Ok(status)
 }
 
 #[tauri::command]
@@ -342,7 +386,8 @@ fn main() {
                         stop_capture,
                         get_logs,
                         clear_logs,
-                        check_for_updates
+                        check_for_updates,
+                        test_capture
                     ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

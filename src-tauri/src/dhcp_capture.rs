@@ -8,8 +8,7 @@ use std::thread::JoinHandle;
 
 #[derive(Error, Debug)]
 pub enum DHCPError {
-    #[error("Capture error: {0}")]
-    CaptureError(String),
+    // CaptureError variant removed as it's not used
 }
 
 #[derive(Debug, Clone)]
@@ -104,28 +103,37 @@ impl DHCPCapture {
                             Ok(mut cap) => {
                                 println!("Capture démarrée sur {}", device.name);
                                 
-                                // Filtre DHCP
-                                if let Err(e) = cap.filter("udp and (port 67 or port 68)", true) {
-                                    println!("Erreur filtre DHCP: {}", e);
-                                } else {
-                                    println!("Filtre DHCP appliqué");
+                                // Filtre DHCP avec gestion d'erreur améliorée
+                                match cap.filter("udp and (port 67 or port 68)", true) {
+                                    Ok(_) => println!("✅ Filtre DHCP appliqué avec succès"),
+                                    Err(e) => {
+                                        println!("⚠️ Erreur filtre DHCP: {}, tentative sans filtre...", e);
+                                        // Essayer sans filtre si le filtre échoue
+                                        if let Err(e2) = cap.filter("", true) {
+                                            println!("❌ Impossible d'appliquer un filtre: {}", e2);
+                                        } else {
+                                            println!("✅ Capture sans filtre appliquée");
+                                        }
+                                    }
                                 }
 
                                 let mut packet_count = 0;
                                 let start_time = std::time::Instant::now();
                                 
-                                println!("En attente de paquets sur {}...", device.name);
+                                println!("🚀 Starting capture loop on {}", device.name);
                                 
                                 // Boucle de capture avec timeout très court
                                 let mut should_stop = false;
                                 let mut last_check = std::time::Instant::now();
+                                let mut consecutive_errors = 0;
+                                let max_consecutive_errors = 5;
                                 
                                 while !should_stop {
-                                    // Vérifier l'arrêt toutes les 1ms
-                                    if last_check.elapsed() > std::time::Duration::from_millis(1) {
+                                    // Vérifier l'arrêt toutes les 10ms (reduced from 1ms for better performance)
+                                    if last_check.elapsed() > std::time::Duration::from_millis(10) {
                                         if let Ok(capturing) = is_capturing.lock() {
                                             if !*capturing {
-                                                println!("Arrêt de la capture demandé");
+                                                println!("🛑 Arrêt de la capture demandé");
                                                 should_stop = true;
                                                 break;
                                             }
@@ -136,45 +144,67 @@ impl DHCPCapture {
                                     // Capturer un paquet avec timeout très court
                                     match cap.next_packet() {
                                         Ok(packet) => {
+                                            consecutive_errors = 0; // Reset error counter on success
                                             packet_count += 1;
                                             let elapsed = start_time.elapsed();
                                             let packet_data = packet.data;
-                                            println!("Paquet #{} reçu après {:?}: {} octets", 
+                                            println!("✅ Paquet #{} reçu après {:?}: {} octets", 
                                                      packet_count, elapsed, packet_data.len());
 
                                             Self::debug_packet_analysis(&packet_data);
                                             
                                             if let Some(dhcp_info) = Self::parse_dhcp_packet(&packet_data) {
-                                                println!("DHCP détecté!");
-                                                let _ = tx.send(dhcp_info);
+                                                println!("🎯 DHCP détecté et parsé avec succès!");
+                                                if let Err(e) = tx.send(dhcp_info) {
+                                                    eprintln!("❌ Erreur envoi paquet: {}", e);
+                                                } else {
+                                                    println!("📤 Paquet envoyé au callback");
+                                                }
+                                            } else {
+                                                println!("⚠️ Paquet reçu mais pas parsé comme DHCP valide");
                                             }
                                         }
-                                        Err(_) => {
-                                            // Pas de paquet reçu, continuer la boucle
-                                            // Le délai est géré par la vérification d'arrêt ci-dessus
+                                        Err(e) => {
+                                            consecutive_errors += 1;
+                                            if consecutive_errors <= max_consecutive_errors {
+                                                // Log only first few errors to avoid spam
+                                                if consecutive_errors == 1 {
+                                                    println!("⏳ En attente de paquets... (erreur: {})", e);
+                                                }
+                                            } else if consecutive_errors == max_consecutive_errors {
+                                                println!("⚠️ {} erreurs consécutives, mais continuation de la capture...", consecutive_errors);
+                                            }
+                                            
+                                            // Small delay to prevent CPU spinning
+                                            std::thread::sleep(std::time::Duration::from_millis(1));
                                         }
                                     }
                                 }
                                 
                                 if should_stop {
-                                    println!("Capture arrêtée par l'utilisateur");
+                                    println!("🛑 Capture arrêtée par l'utilisateur");
                                 } else if packet_count == 0 {
-                                    println!("AUCUN PAQUET REÇU sur {} !", device.name);
+                                    println!("⚠️ AUCUN PAQUET REÇU sur {} !", device.name);
                                 } else {
-                                    println!("Capture terminée ({} paquets)", packet_count);
+                                    println!("✅ Capture terminée ({} paquets)", packet_count);
                                 }
                             }
                             Err(e) => {
-                                println!("Erreur ouverture capture: {}", e);
+                                eprintln!("❌ Erreur ouverture capture: {}", e);
                             }
                         }
                     }
                     Err(e) => {
-                        println!("Erreur création capture: {}", e);
+                        eprintln!("❌ Erreur création capture: {}", e);
                     }
                 }
             } else {
-                println!("Interface non trouvée: {}", interface_name);
+                eprintln!("❌ Interface non trouvée: {}", interface_name);
+                // Essayer de lister toutes les interfaces disponibles pour le debug
+                println!("📋 Interfaces disponibles:");
+                for device in &devices {
+                    println!("  - {}: {}", device.name, device.desc.as_deref().unwrap_or("No description"));
+                }
             }
         });
         
@@ -220,37 +250,62 @@ impl DHCPCapture {
     }
 
     fn parse_dhcp_packet(packet_data: &[u8]) -> Option<DHCPPacket> {
-        // Vérifier la taille minimale d'un paquet DHCP
-        if packet_data.len() < 240 {
+        // Vérifier la taille minimale d'un paquet DHCP (plus flexible)
+        if packet_data.len() < 236 { // Reduced from 240 for better compatibility
+            println!("⚠️ Paquet trop court: {} octets (minimum 236)", packet_data.len());
             return None;
         }
         
         // Chercher l'option 53 (DHCP Message Type) dans les options
         let mut message_type_byte = 0;
-        let mut i = 278; // Début des options DHCP (basé sur les logs)
+        let mut option_50_ip: Option<Ipv4Addr> = None;
         
-        // Debug: afficher les octets autour de 278
-        println!("Debug options DHCP (octets 278-298):");
-        for j in 278..std::cmp::min(298, packet_data.len()) {
+        // Try different starting positions for DHCP options (more flexible parsing)
+        let possible_starts = [278, 282, 286, 290];
+        let mut options_start = None;
+        
+        // Find the actual start of DHCP options
+        for &start_pos in &possible_starts {
+            if start_pos < packet_data.len() - 3 {
+                let option_code = packet_data[start_pos];
+                if option_code == 53 || option_code == 0 || option_code == 255 {
+                    options_start = Some(start_pos);
+                    println!("🎯 Options DHCP trouvées à l'octet {}", start_pos);
+                    break;
+                }
+            }
+        }
+        
+        let options_start = options_start?;
+        
+        // Debug: afficher les octets autour du début des options
+        println!("Debug options DHCP (octets {}-{}):", options_start, options_start + 20);
+        for j in options_start..std::cmp::min(options_start + 20, packet_data.len()) {
             print!("{:02x} ", packet_data[j]);
         }
         println!();
         
-        // Parcourir tous les octets pour trouver l'Option 53
+        // Parcourir les options DHCP
+        let mut i = options_start;
         while i < packet_data.len() - 1 {
             let option_code = packet_data[i];
             let option_length = if i + 1 < packet_data.len() { packet_data[i + 1] } else { 0 };
             
-            println!("Option à l'octet {}: code={}, longueur={}", i, option_code, option_length);
-            
             // Option 255 (End) - fin des options
             if option_code == 255 {
-                println!("Fin des options DHCP");
+                println!("🏁 Fin des options DHCP");
                 break;
             }
             
             // Option 0 (Padding) - ignorer
             if option_code == 0 {
+                i += 1;
+                continue;
+            }
+            
+            // Vérifier que l'option a une longueur valide
+            if option_length == 0 || i + 2 + option_length as usize > packet_data.len() {
+                println!("⚠️ Option invalide à l'octet {}: code={}, longueur={}", i, option_code, option_length);
                 i += 1;
                 continue;
             }
@@ -258,167 +313,61 @@ impl DHCPCapture {
             // Option 53 = DHCP Message Type
             if option_code == 53 && option_length == 1 && i + 2 < packet_data.len() {
                 message_type_byte = packet_data[i + 2];
-                println!("Option 53 (Message Type) trouvée à l'octet {}: {}", i, message_type_byte);
-                // Ne pas break ici, continuer pour trouver Option 50
+                println!("✅ Option 53 (Message Type) trouvée à l'octet {}: {}", i, message_type_byte);
+            }
+            
+            // Option 50 = Requested IP Address
+            if option_code == 50 && option_length == 4 && i + 6 <= packet_data.len() {
+                let ip_bytes = [
+                    packet_data[i + 2],
+                    packet_data[i + 3],
+                    packet_data[i + 4],
+                    packet_data[i + 5],
+                ];
+                option_50_ip = Some(Ipv4Addr::new(ip_bytes[0], ip_bytes[1], ip_bytes[2], ip_bytes[3]));
+                println!("✅ Option 50 (Requested IP) trouvée: {}", option_50_ip.unwrap());
             }
             
             i += 2 + option_length as usize;
         }
         
-        // Si on n'a pas trouvé l'Option 53, chercher dans les octets suivants
-        if message_type_byte == 0 {
-            println!("Option 53 non trouvée, recherche dans les octets suivants...");
-            let mut j = 278;
-            while j < packet_data.len() - 2 {
-                if packet_data[j] == 53 && packet_data[j + 1] == 1 && j + 2 < packet_data.len() {
-                    message_type_byte = packet_data[j + 2];
-                    println!("Option 53 trouvée à l'octet {}: {}", j, message_type_byte);
-                    break;
-                }
-                j += 1;
-            }
-        }
-        
-        let message_type = DHCPMessageType::from(message_type_byte);
-        println!("Type DHCP détecté: {:?} (byte: {})", message_type, message_type_byte);
-        
-        // Afficher les types de messages DHCP de manière plus claire
-        match message_type_byte {
-            1 => println!("DHCP DISCOVER"),
-            2 => println!("DHCP OFFER"),
-            3 => println!("DHCP REQUEST"),
-            4 => println!("DHCP DECLINE"),
-            5 => println!("DHCP ACK"),
-            6 => println!("DHCP NAK"),
-            7 => println!("DHCP RELEASE"),
-            8 => println!("DHCP INFORM"),
-            _ => println!("Type DHCP inconnu: {}", message_type_byte),
-        }
-        
-        // Extraire les adresses IP source et destination depuis les en-têtes IP
-        let source_ip = if packet_data.len() >= 26 {
-            Ipv4Addr::new(packet_data[26], packet_data[27], packet_data[28], packet_data[29])
+        // Extraire les adresses IP source et destination
+        let source_ip = if packet_data.len() >= 30 {
+            Ipv4Addr::new(
+                packet_data[26],
+                packet_data[27],
+                packet_data[28],
+                packet_data[29],
+            )
         } else {
             Ipv4Addr::new(0, 0, 0, 0)
         };
         
         let destination_ip = if packet_data.len() >= 30 {
-            Ipv4Addr::new(packet_data[30], packet_data[31], packet_data[32], packet_data[33])
+            Ipv4Addr::new(
+                packet_data[30],
+                packet_data[31],
+                packet_data[32],
+                packet_data[33],
+            )
         } else {
-            Ipv4Addr::new(255, 255, 255, 255)
+            Ipv4Addr::new(0, 0, 0, 0)
         };
         
+        // Créer le paquet DHCP
+        let dhcp_packet = DHCPPacket {
+            timestamp: Utc::now(),
+            message_type: DHCPMessageType::from(message_type_byte),
+            source_ip,
+            destination_ip,
+            option_50: option_50_ip,
+            raw_data: packet_data.to_vec(),
+        };
         
+        println!("🎉 Paquet DHCP parsé avec succès: {:?} de {} vers {}", 
+                 dhcp_packet.message_type, source_ip, destination_ip);
         
-        // Chercher l'Option 50 (Requested IP Address) et autres options importantes
-        let mut option_50 = None;
-        let mut i = 278; // Début des options DHCP
-        
-        println!("Recherche des options DHCP à partir de l'octet {}", i);
-        
-        // Parcourir tous les octets pour trouver toutes les options
-        while i < packet_data.len() - 1 {
-            let option_code = packet_data[i];
-            let option_length = if i + 1 < packet_data.len() { packet_data[i + 1] } else { 0 };
-            
-            // Option 255 (End) - fin des options
-            if option_code == 255 {
-                println!("Fin des options DHCP à l'octet {}", i);
-                break;
-            }
-            
-            // Option 0 (Padding) - ignorer
-            if option_code == 0 {
-                i += 1;
-                continue;
-            }
-            
-            println!("Option DHCP trouvée à l'octet {}: code={}, longueur={}", i, option_code, option_length);
-            
-            // Option 50 (Requested IP Address)
-            if option_code == 50 && option_length == 4 && i + 5 < packet_data.len() {
-                let ip_bytes = [packet_data[i + 2], packet_data[i + 3], 
-                               packet_data[i + 4], packet_data[i + 5]];
-                option_50 = Some(Ipv4Addr::from(ip_bytes));
-                println!("Option 50 trouvée à l'octet {}: {}", i, option_50.unwrap());
-            }
-            
-            // Option 53 (DHCP Message Type) - déjà traité plus haut
-            if option_code == 53 && option_length == 1 && i + 2 < packet_data.len() {
-                let msg_type = packet_data[i + 2];
-                println!("Option 53 (Message Type) à l'octet {}: {}", i, msg_type);
-            }
-            
-            // Option 54 (Server Identifier)
-            if option_code == 54 && option_length == 4 && i + 5 < packet_data.len() {
-                let ip_bytes = [packet_data[i + 2], packet_data[i + 3], 
-                               packet_data[i + 4], packet_data[i + 5]];
-                let server_ip = Ipv4Addr::from(ip_bytes);
-                println!("Option 54 (Server ID) à l'octet {}: {}", i, server_ip);
-            }
-            
-            // Option 61 (Client Identifier)
-            if option_code == 61 && option_length > 0 && i + 2 + option_length as usize <= packet_data.len() {
-                println!("Option 61 (Client ID) trouvée à l'octet {}, longueur: {}", i, option_length);
-            }
-            
-            // Option 32 (Requested IP Address) - alternative à Option 50
-            if option_code == 32 && option_length == 4 && i + 5 < packet_data.len() {
-                let ip_bytes = [packet_data[i + 2], packet_data[i + 3], 
-                               packet_data[i + 4], packet_data[i + 5]];
-                let requested_ip = Ipv4Addr::from(ip_bytes);
-                println!("Option 32 (Requested IP) trouvée à l'octet {}: {}", i, requested_ip);
-                // Utiliser Option 32 comme fallback si Option 50 n'est pas trouvée
-                if option_50.is_none() {
-                    option_50 = Some(requested_ip);
-                    println!("Utilisation de l'Option 32 comme adresse demandée: {}", requested_ip);
-                }
-            }
-            
-            i += 2 + option_length as usize;
-        }
-        
-        // Si on n'a pas trouvé l'Option 50/32, chercher dans les octets suivants
-        if option_50.is_none() {
-            println!("Option 50/32 non trouvée, recherche dans les octets suivants...");
-            let mut j = 278;
-            while j < packet_data.len() - 5 {
-                // Chercher Option 50
-                if packet_data[j] == 50 && packet_data[j + 1] == 4 && j + 5 < packet_data.len() {
-                    let ip_bytes = [packet_data[j + 2], packet_data[j + 3], 
-                                   packet_data[j + 4], packet_data[j + 5]];
-                    option_50 = Some(Ipv4Addr::from(ip_bytes));
-                    println!("Option 50 trouvée à l'octet {}: {}", j, option_50.unwrap());
-                    break;
-                }
-                // Chercher Option 32
-                if packet_data[j] == 32 && packet_data[j + 1] == 4 && j + 5 < packet_data.len() {
-                    let ip_bytes = [packet_data[j + 2], packet_data[j + 3], 
-                                   packet_data[j + 4], packet_data[j + 5]];
-                    let requested_ip = Ipv4Addr::from(ip_bytes);
-                    option_50 = Some(requested_ip);
-                    println!("Option 32 trouvée à l'octet {}: {}", j, requested_ip);
-                    break;
-                }
-                j += 1;
-            }
-        }
-        
-        // Retourner le paquet DHCP
-        if option_50.is_some() {
-            println!("Paquet DHCP avec Option 50 valide détecté!");
-        } else {
-            println!("Paquet DHCP détecté (sans Option 50)");
-        }
-        
-                            Some(DHCPPacket {
-                        timestamp: Utc::now(),
-                        message_type,
-                        source_ip,
-                        destination_ip,
-                        option_50,
-                        raw_data: packet_data.to_vec(),
-                    })
+        Some(dhcp_packet)
     }
 
 

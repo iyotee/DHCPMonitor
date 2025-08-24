@@ -81,7 +81,7 @@ const Option50View: React.FC<Option50ViewProps> = ({ isCapturing }) => {
     fetchLogs();
 
     if (isCapturing) {
-      const interval = setInterval(fetchLogs, 1000);
+      const interval = setInterval(fetchLogs, 100); // Changed from 1000ms to 100ms for better responsiveness
       return () => clearInterval(interval);
     }
   }, [isCapturing]);

@@ -64,9 +64,9 @@ const LogsView: React.FC<LogsViewProps> = ({ isCapturing }) => {
     // Fetch logs initially
     fetchLogs();
 
-    // Set up polling if capturing
+    // Set up polling if capturing - reduced interval for better responsiveness
     if (isCapturing) {
-      const interval = setInterval(fetchLogs, 1000);
+      const interval = setInterval(fetchLogs, 100); // Changed from 1000ms to 100ms
       return () => clearInterval(interval);
     }
   }, [isCapturing]);

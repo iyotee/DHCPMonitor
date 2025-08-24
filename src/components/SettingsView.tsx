@@ -35,18 +35,13 @@ const SettingsView: React.FC = () => {
         const result = await core.invoke<UpdateInfo>('check_for_updates');
         setUpdateInfo(result);
       } else {
-        // Simulation pour la version web
+        // Version web - données simulées
         const mockUpdateInfo: UpdateInfo = {
-              current_version: "1.1.35",
-    latest_version: "1.1.9",
-          has_update: true,
-          release_info: {
-            name: "Version 1.1.2 - Améliorations",
-            body: "Corrections de bugs et améliorations de performance",
-            html_url: "https://github.com/iyotee/DHCPMonitor/releases/tag/v1.1.2",
-            published_at: new Date().toISOString(),
-          },
-          download_url: "https://github.com/iyotee/DHCPMonitor/releases/download/v1.1.2/DHCPMonitor-Setup.exe",
+          current_version: "1.1.36",
+          latest_version: "1.1.36",
+          has_update: false,
+          release_info: null,
+          download_url: null,
         };
         setUpdateInfo(mockUpdateInfo);
       }
@@ -229,7 +224,7 @@ const SettingsView: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Version:</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">1.1.35</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">1.1.36</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Licence:</span>
@@ -326,7 +321,7 @@ const SettingsView: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Version actuelle:</span>
                                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                       {updateInfo?.current_version || "1.1.35"}
+                       {updateInfo?.current_version || "1.1.36"}
                      </span>
                   </div>
                   {updateInfo?.latest_version && updateInfo.latest_version !== updateInfo.current_version && (
