@@ -1,32 +1,31 @@
 {
   "name": "dhcp-monitor",
-  "version": "1.1.36",
+  "version": "1.1.37",
   "description": "DHCP Monitor - Option 50 Tracker",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
-    "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
-    "tauri:preview": "tauri preview"
+    "tauri": "npx @tauri-apps/cli",
+    "build:tauri": "npx @tauri-apps/cli build"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/api": "^2.7.0",
+    "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "lucide-react": "^0.263.1"
+    "recharts": "^2.8.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",
-    "@types/react": "^18.2.15",
-    "@types/react-dom": "^18.2.7",
-    "@vitejs/plugin-react": "^4.0.3",
-    "autoprefixer": "^10.4.14",
-    "postcss": "^8.4.24",
-    "tailwindcss": "^3.3.2",
-    "typescript": "^5.0.2",
-    "vite": "^4.4.4"
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8"
   }
 }

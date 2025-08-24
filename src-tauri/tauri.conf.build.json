@@ -1,27 +1,21 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "version": "1.1.36",
-  "identifier": "com.iyotee.dhcp-monitor",
-  "productName": "DHCP Monitor Pro",
-  "description": "DHCP Monitor - Option 50 Tracker",
-  "author": "iyotee",
-  "license": "MIT",
-  "repository": "https://github.com/iyotee/DHCPMonitor",
+  "productName": "DHCP Monitor",
+  "version": "1.1.37",
+  "identifier": "com.dhcp-monitor.dev",
   "build": {
-    "frontendDist": "../dist",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist"
+    "frontendDist": "../dist"
   },
   "bundle": {
     "active": true,
     "targets": "all",
-    "identifier": "com.iyotee.dhcp-monitor",
     "icon": [
+      "icons/icon.png",
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
+      "icons/icon.ico",
+      "icons/icon.icns"
     ]
   }
 }
